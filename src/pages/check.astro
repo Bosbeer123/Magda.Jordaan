@@ -1,0 +1,29 @@
+---
+import Base from '../layouts/Base.astro';
+import EstateCheck from '../components/EstateCheck';
+import { compliance } from '../config/site';
+---
+<Base
+  title="Estate readiness check"
+  description="Eight yes-or-no questions. See in two minutes where your family would stand if you died today."
+>
+  <div class="prose">
+    <h1>Estate readiness check</h1>
+    <p>Eight questions, two minutes. Your answers stay on this page until you ask for the report.</p>
+    <EstateCheck client:load />
+    <p class="muted small">{compliance.generalInfo}</p>
+  </div>
+</Base>
+
+<style is:global>
+  .estate-check .questions { padding-left: 1.2em; }
+  .estate-check .questions li { margin-bottom: 18px; }
+  .estate-check .questions p { margin: 0 0 8px; }
+  .estate-check .choices { display: flex; gap: 8px; flex-wrap: wrap; }
+  .estate-check .choices button {
+    font: 600 1rem var(--font-ui); padding: 10px 18px; border-radius: var(--radius);
+    border: 2px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer;
+  }
+  .estate-check .choices button.chosen { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+  .estate-check .card { margin: 24px 0; }
+</style>

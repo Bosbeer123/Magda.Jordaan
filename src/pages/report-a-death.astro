@@ -1,0 +1,46 @@
+---
+import Base from '../layouts/Base.astro';
+import { site } from '../config/site';
+// Reproduces the Master of the High Court's published document list.
+// Magda to check every line before launch (docs/CONTENT-TODO.md).
+const docs = [
+  ['J294', 'Death notice, completed and signed'],
+  ['—', 'Death certificate (certified copy)'],
+  ['—', 'The original will and any codicils, if there is a will'],
+  ['J243', 'Inventory of the assets in the estate'],
+  ['J190', 'Acceptance of trust as executor (estates over R250 000)'],
+  ['J262', 'Bond of security, if the Master asks for one'],
+  ['—', 'Certified copies of the IDs of the deceased, the surviving spouse and the executor'],
+];
+---
+<Base
+  title="Reporting a death: the documents you need"
+  description="A plain checklist of the documents the Master of the High Court needs to report a deceased estate in South Africa."
+  legal
+>
+  <article class="prose">
+    <h1>Reporting a death: the documents you need</h1>
+    <p>
+      An estate must be reported to the Master of the High Court within 14 days of the death. This is the list the
+      Master's office works from. Print it, tick it off, and bring it all at once.
+    </p>
+    <table>
+      <thead><tr><th class="ui">Form</th><th class="ui">Document</th><th class="ui">Got it</th></tr></thead>
+      <tbody>
+        {docs.map(([form, text]) => (<tr><td>{form}</td><td>{text}</td><td>☐</td></tr>))}
+      </tbody>
+    </table>
+    <h2>Under or over R250 000?</h2>
+    <p>
+      Smaller estates (under R250 000) may be wound up with Letters of Authority, a simpler route. Larger estates need
+      an executor with Letters of Executorship. <span class="todo">[Magda: add the under-R250k variant list]</span>
+    </p>
+    <p>If you'd like someone to carry this for you, phone me on {site.phone}.</p>
+    <p class="muted small">Source: Master of the High Court, Department of Justice.</p>
+  </article>
+</Base>
+
+<style>
+  table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+</style>

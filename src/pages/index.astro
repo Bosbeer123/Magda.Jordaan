@@ -1,0 +1,50 @@
+---
+import Base from '../layouts/Base.astro';
+import { site } from '../config/site';
+// Starter copy. The chosen direction (docs/design/) replaces the layout; keep the voice:
+// short sentences, "I" not "we", no superlatives, no fear-selling, never "independent".
+---
+<Base
+  title="Home"
+  description="Magda Jordaan, Financial Adviser and admitted attorney in Centurion. Estate planning, wills and financial planning, explained plainly."
+>
+  <section class="prose">
+    <p class="muted ui small">{site.roles} · Centurion</p>
+    <h1>{site.tagline}</h1>
+    <p>
+      I spent years as an attorney winding up deceased estates. I saw what families go through when the will
+      can't be found, the policies name the wrong person, or there is no cash to keep the house running.
+      Now I help people plan so their family never has to find out the hard way.
+    </p>
+    <p>
+      <a class="btn" href="/check">Take the 2-minute estate check</a>
+      &nbsp;
+      <a class="btn secondary" href="/contact">Talk to me</a>
+    </p>
+  </section>
+
+  <h2>How I can help</h2>
+  <div class="grid">
+    <a class="card" href="/wills-and-estates">
+      <h3>Wills &amp; estates</h3>
+      <p class="muted">Wills, trusts, executor services and deceased estates.</p>
+    </a>
+    <a class="card" href="/financial-planning">
+      <h3>Financial planning</h3>
+      <p class="muted">Life cover, retirement, investments and medical aid, for you and your business.</p>
+    </a>
+    <a class="card" href="/check">
+      <h3>Estate readiness check</h3>
+      <p class="muted">Eight yes-or-no questions. See where your family would stand today.</p>
+    </a>
+  </div>
+
+  <h2>Why people come to me</h2>
+  <div class="prose">
+    <p>
+      Objective advice across a range of providers, including Momentum and Sanlam. I say it the way it is,
+      I put the fees on the table, and I would rather you plan once and properly than buy something you don't need.
+    </p>
+    <p class="muted"><em>“{site.mission}”</em></p>
+  </div>
+</Base>

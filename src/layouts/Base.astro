@@ -1,0 +1,62 @@
+---
+import '../styles/global.css';
+import { site, compliance } from '../config/site';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Show the "legal services are not FAIS" flag at the top of the page. */
+  legal?: boolean;
+}
+const { title, description, legal = false } = Astro.props;
+const path = Astro.url.pathname.replace(/\.html$/, '');
+const nav = [
+  { href: '/', label: 'Home' },
+  { href: '/financial-planning', label: 'Financial planning' },
+  { href: '/wills-and-estates', label: 'Wills & estates' },
+  { href: '/check', label: 'Estate check' },
+  { href: '/articles', label: 'Articles' },
+  { href: '/contact', label: 'Contact' },
+];
+const fullTitle = path === '/' ? `${site.name} · Financial Adviser and Attorney, Centurion` : `${title} · ${site.name}`;
+---
+<!doctype html>
+<html lang="en-ZA">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={new URL(path, Astro.site)} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="/">{site.name}</a>
+        <nav class="nav" aria-label="Main">
+          {nav.map((n) => (
+            <a href={n.href} aria-current={path === n.href ? 'page' : undefined}>{n.label}</a>
+          ))}
+        </nav>
+      </div>
+    </header>
+
+    <main class="wrap">
+      {legal && <p class="legal-flag">{compliance.legalServicesFlag}</p>}
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <p><strong>{site.name}</strong> · {site.address} · {site.phone} · {site.email}</p>
+        <p>{compliance.fspFooter}</p>
+        <p>{compliance.legalServicesFlag}</p>
+        <p>{compliance.generalInfo} <a href="/privacy">Privacy notice</a> · <a href="/paia">PAIA manual</a></p>
+      </div>
+    </footer>
+  </body>
+</html>

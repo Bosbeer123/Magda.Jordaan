@@ -1,0 +1,76 @@
+/* Neutral starter skin. When Magda picks a direction (A–E), replace ONLY the tokens
+   in :root and the fonts; layout and components read from these tokens. */
+:root {
+  --bg: #fbfaf7;
+  --surface: #ffffff;
+  --ink: #1d2327;
+  --muted: #5b6670;
+  --line: #e3e0d8;
+  --accent: #1f4e79;      /* swap per direction */
+  --accent-ink: #ffffff;
+  --warn-bg: #fff6e0;
+
+  --font-body: Georgia, 'Times New Roman', serif;
+  --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --radius: 8px;
+  --measure: 68ch;
+  --gutter: 16px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { font-size: 112.5%; } /* 18px base: the 55+ reader comes first */
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  line-height: 1.6;
+}
+h1, h2, h3, nav, button, label, .ui { font-family: var(--font-ui); }
+h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1.15; margin: 0 0 .5em; }
+h2 { font-size: 1.4rem; margin: 2em 0 .5em; }
+a { color: var(--accent); }
+img { max-width: 100%; height: auto; }
+
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 var(--gutter); }
+.prose { max-width: var(--measure); }
+.muted { color: var(--muted); }
+.small { font-size: .85rem; }
+
+.site-header { border-bottom: 1px solid var(--line); background: var(--surface); }
+.site-header .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px; padding-block: 14px; }
+.brand { font-family: var(--font-ui); font-weight: 700; font-size: 1.1rem; color: var(--ink); text-decoration: none; }
+.nav { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: .9rem; }
+.nav a { color: var(--ink); text-decoration: none; }
+.nav a[aria-current='page'] { color: var(--accent); font-weight: 600; }
+
+main { padding-block: 40px 64px; }
+
+.btn {
+  display: inline-block; font-family: var(--font-ui); font-size: 1rem; font-weight: 600;
+  background: var(--accent); color: var(--accent-ink); border: 0; border-radius: var(--radius);
+  padding: 14px 22px; text-decoration: none; cursor: pointer;
+}
+.btn.secondary { background: transparent; color: var(--accent); border: 2px solid var(--accent); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+a.card { display: block; text-decoration: none; color: inherit; }
+a.card h3 { color: var(--accent); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; }
+.grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+
+.legal-flag { background: var(--warn-bg); border-left: 4px solid var(--accent); padding: 10px 14px; font-size: .85rem; }
+
+.site-footer { border-top: 1px solid var(--line); background: var(--surface); padding-block: 32px; font-size: .8rem; color: var(--muted); font-family: var(--font-ui); }
+.site-footer p { margin: 0 0 .6em; max-width: 90ch; }
+
+.todo { background: #ffe9e9; color: #8a1c1c; padding: 0 4px; border-radius: 3px; font-family: var(--font-ui); font-size: .85em; }
+
+/* Forms */
+label { display: block; font-weight: 600; margin: 14px 0 6px; }
+input[type='text'], input[type='email'], input[type='tel'] {
+  width: 100%; font: inherit; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius); background: #fff;
+}
+.check-row { display: flex; gap: 10px; align-items: flex-start; font-weight: 400; }
+.check-row input { margin-top: 6px; width: 20px; height: 20px; flex: none; }

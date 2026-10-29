@@ -1,0 +1,39 @@
+---
+import Base from '../layouts/Base.astro';
+import { site, compliance } from '../config/site';
+// DRAFT STRUCTURE ONLY. Magda (as Information Officer) must approve the final text.
+---
+<Base title="Privacy notice" description="How Magda Jordaan collects, uses and protects personal information under POPIA.">
+  <article class="prose">
+    <h1>Privacy notice</h1>
+    <p class="todo">DRAFT — to be completed and approved by Magda before launch. Version {compliance.privacyNoticeVersion}.</p>
+
+    <h2>Who is responsible</h2>
+    <p>{site.name}, {site.address}. Information Officer: {site.name} ({site.email}).</p>
+
+    <h2>What I collect, and why</h2>
+    <ul>
+      <li>Estate check answers and your name and email, to send you your report.</li>
+      <li>Your marketing consent, if you tick the box, to send you articles. You can unsubscribe at any time.</li>
+      <li>A record of your consent (date, time, form and IP address), because the law requires me to keep it.</li>
+    </ul>
+
+    <h2>Where it is stored</h2>
+    <p>
+      On secure servers operated by Supabase in the European Union, under a written agreement. POPIA section 72
+      allows this transfer because the EU's data protection law gives equal or better protection.
+    </p>
+
+    <h2>Who sees it</h2>
+    <p>Only me and the person who maintains this website. I never sell or share your information.</p>
+
+    <h2>How long I keep it</h2>
+    <p><span class="todo">[Retention period]</span></p>
+
+    <h2>Your rights</h2>
+    <p>
+      You may ask to see, correct or delete your information, and object to direct marketing, by emailing {site.email}.
+      You may complain to the Information Regulator (inforegulator.org.za).
+    </p>
+  </article>
+</Base>

@@ -1,0 +1,19 @@
+---
+import Base from '../layouts/Base.astro';
+import { site } from '../config/site';
+---
+<Base title="Contact" description="Phone, WhatsApp or book a time with Magda Jordaan in Lyttelton, Centurion.">
+  <article class="prose">
+    <h1>Talk to me</h1>
+    <p>The quickest way is a phone call or a WhatsApp. I answer people, not inboxes.</p>
+    <ul>
+      <li><strong>Phone:</strong> {site.phone}</li>
+      <li><strong>WhatsApp:</strong> {site.whatsapp}</li>
+      <li><strong>Email:</strong> {site.email}</li>
+      <li><strong>Office:</strong> {site.address}</li>
+      <li><strong>Hours:</strong> {site.officeHours}</li>
+    </ul>
+    <p><a class="btn" href={site.bookingUrl}>Book a 15-minute will review</a></p>
+    <p class="muted small">I work across {site.areas.join(', ')}.</p>
+  </article>
+</Base>
