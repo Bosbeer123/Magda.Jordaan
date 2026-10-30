@@ -14,6 +14,7 @@ Fill these into `src/config/site.ts` (or the page named) and tick them off.
 - [ ] Booking link (Cal.com, once set up)
 - [ ] Approve every question, every what-if line (death, disability, critical illness) and every fix in the Sunflower (`src/components/SunflowerTest.tsx`), and the points per question
 - [ ] Approve what the parrot says for each topic (`src/components/ParrotGuide.tsx`)
+- [ ] Approve what the lioness says (`src/components/LionArt.guide.ts`)
 - [ ] Check the Master's document list and the under-R250 000 Letters of Authority line (`/report-a-death`)
 - [ ] Privacy notice: final text, approve the retention line (12 months for enquiries, 5 years FAIS records); Magda registered as Information Officer
 - [ ] PAIA manual (ask Momentum Consult for the franchisee template)

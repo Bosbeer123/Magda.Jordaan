@@ -121,6 +121,10 @@ export default function ParrotGuide() {
   const [bubble, setBubble] = useState<{ kind: 'fact' | 'menu' | 'topic'; text?: string; topic?: Topic } | null>(null);
   const [flying, setFlying] = useState(false);
   const [hidden, setHidden] = useState(false);
+  // The parrot never talks over the page on its own: when it lands it shows a small "…" badge; a tap gets the fact.
+  const [hint, setHint] = useState(false);
+  const hintTimer = useRef<number | undefined>(undefined);
+  const showHint = () => { setHint(true); clearTimeout(hintTimer.current); hintTimer.current = window.setTimeout(() => setHint(false), 8000); };
   const [menuHost, setMenuHost] = useState<Element | null>(null);
   const birdRef = useRef<HTMLButtonElement>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
@@ -139,7 +143,9 @@ export default function ParrotGuide() {
   const spotOn = (el: Element, fx: number) => { const r = el.getBoundingClientRect(); return { x: r.left + r.width * fx - W / 2, y: r.top - H + 8, r }; };
   // A perch spot ([data-parrot-perch], on a branch drawn on a box) is small; a block is usable when it's wide enough.
   const isSpot = (el: Element | null | undefined) => !!el?.matches('[data-parrot-perch]');
-  const visible = (r: DOMRect, el?: Element | null) => r.top > 70 && r.top < innerHeight - 150 && (isSpot(el) || r.width > 120) && r.left > -20 && r.right < innerWidth + 20;
+  const visible = (r: DOMRect, el?: Element | null) => isSpot(el)
+    ? r.top > 110 && r.top < innerHeight - 8 && r.left > 30 && r.right < innerWidth - 30   // a branch, or the lioness's back
+    : r.top > 70 && r.top < innerHeight - 150 && r.width > 120 && r.left > -20 && r.right < innerWidth + 20;
   // Somewhere to fly to: open space, never over words. During the sunflower activity, only over the sunflower side.
   const randomSky = () => {
     const act = document.querySelector('.sf-scene');
@@ -193,7 +199,7 @@ export default function ParrotGuide() {
       const sp = spotOn(home, 0.5); pos.current = { x: sp.x, y: sp.y };
       perch.current = { el: home, fx: 0.5 }; mode.current = 'perched'; setFlying(false);
       timer.current = performance.now() + 9000;
-      setTimeout(() => say('fact', 'Hello! I fly around and tell you useful things. Tap me any time.', undefined, 6500), 1200);
+      setTimeout(showHint, 1500);
     } else {
       pos.current = { x: -W, y: innerHeight * 0.3 }; takeOff();
     }
@@ -225,7 +231,7 @@ export default function ParrotGuide() {
           if (mode.current === 'wander' && dist < 40) goal.current = randomSky();
           if (mode.current === 'wander' && now > timer.current) {
             const p = pickPerch();
-            if (p) flyToPerch(p, () => say('fact', nextFact(ctxFor(p.el))));
+            if (p) flyToPerch(p, showHint);
             else timer.current = now + 3000;
           }
           if (mode.current === 'landing' && landOn.current && dist < 4) {
@@ -233,8 +239,9 @@ export default function ParrotGuide() {
             perch.current = { el: l.el, fx: l.fx }; mode.current = 'perched'; setFlying(false);
             timer.current = now + 9000 + Math.random() * 4000;
             facing.current = isSpot(l.el) ? Number((l.el as HTMLElement).dataset.face ?? -1) : l.fx > 0.5 ? -1 : 1;
-            const glow = isSpot(l.el) ? l.el.closest(PERCHABLE) ?? l.el.parentElement! : l.el;
-            glow.classList.add('parrot-glow'); setTimeout(() => glow.classList.remove('parrot-glow'), 2600);
+            if (l.el.closest('[data-lion]')) dispatchEvent(new CustomEvent('parrot-on-lion', { detail: { el: l.el } }));   // she yawns at him
+            else { const glow = isSpot(l.el) ? l.el.closest(PERCHABLE) ?? l.el.parentElement! : l.el;
+              glow.classList.add('parrot-glow'); setTimeout(() => glow.classList.remove('parrot-glow'), 2600); }
             l.then?.();
           }
         }
@@ -306,12 +313,13 @@ export default function ParrotGuide() {
   }
 
   function onBird() {
+    setHint(false);
     if (bubble?.kind === 'menu') { setBubble(null); return; }
     const ctx = ctxFor(perch.current?.el ?? document.elementFromPoint(innerWidth / 2, innerHeight / 2));
-    say('fact', nextFact(ctx), undefined, 9000);
+    say('fact', nextFact(ctx), undefined, 8000);
     if (mode.current === 'perched') timer.current = performance.now() + 9000;
   }
-  function hide() { setHidden(true); setBubble(null); try { sessionStorage.setItem('pg-hidden', '1'); } catch { /* ignore */ } }
+  function hide() { setHidden(true); setBubble(null); try { sessionStorage.setItem('pg-hidden', '1'); } catch { /* ignore */ } dispatchEvent(new Event('mascots-hide')); }
 
   const topicButtons = (big = false) => (
     <div className={`pg-topics ${big ? 'is-big' : ''}`}>
@@ -338,6 +346,7 @@ export default function ParrotGuide() {
         <button ref={birdRef} type="button" className={`pg ${flying ? 'is-flying' : 'is-perched'}`}
           aria-label="The parrot: tap for a fact" onClick={onBird}>
           <span className="pg-flip"><Parrot flying={flying} /></span>
+          {hint && !bubble && !flying && <span className="pg-hint" aria-hidden="true">…</span>}
         </button>
       )}
 
@@ -365,7 +374,7 @@ export default function ParrotGuide() {
             <div className="pg-content" key="menu">
               <p className="pg-hello">What would you like to know about?</p>
               {topicButtons()}
-              <div className="pg-foot"><button type="button" className="pg-link" onClick={hide}>Hide the parrot</button></div>
+              <div className="pg-foot"><button type="button" className="pg-link" onClick={hide}>Hide the animals</button></div>
             </div>
           )}
           <button type="button" className="pg-x" aria-label="Close" onClick={() => setBubble(null)}>×</button>

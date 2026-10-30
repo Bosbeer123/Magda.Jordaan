@@ -2,6 +2,8 @@
 import '../styles/global.css';
 import { site, compliance, linkedin } from '../config/site';
 import ParrotGuide from '../components/ParrotGuide';
+import LionGuide from '../components/LionGuide';
+import '../styles/lion.css';
 import Fact from '../components/Fact.astro';
 
 interface Props {
@@ -11,7 +13,7 @@ interface Props {
   legal?: boolean;
 }
 const { title, description, legal = false } = Astro.props;
-const path = Astro.url.pathname.replace(/\.html$/, '') || '/';
+const path = Astro.url.pathname.replace(/\.html$/, '').replace(/^\/index$/, '/') || '/';
 const nav = [
   { href: '/financial-planning', label: 'Financial planning' },
   { href: '/wills-and-estates', label: 'Wills & estates' },
@@ -38,6 +40,8 @@ const fullTitle = path === '/' ? `${site.name} · Financial Adviser and Attorney
     <meta property="og:image" content={new URL('/og.jpg', Astro.site)} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Magda Jordaan in a sunflower field, with a parrot asking: how ready is your family?" />
+    <meta property="og:site_name" content={site.name} />
     <meta property="og:url" content={new URL(path, Astro.site)} />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -85,6 +89,7 @@ const fullTitle = path === '/' ? `${site.name} · Financial Adviser and Attorney
     </svg>
 
     <ParrotGuide client:idle />
+    <LionGuide client:only="react" />
 
     <script>
       // Smooth scroll reveals: anything with .reveal (or a .grow/.bud on its own) fades and grows in when seen.

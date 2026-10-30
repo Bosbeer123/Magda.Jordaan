@@ -77,3 +77,7 @@
 @media (max-width: 640px) { .pg-inline::before { display: none; } .pg-inline .pg-hello { font-size: 23px; } }
 .pg.is-hop .pg-flip { animation: pg-hop .5s var(--ease); }
 @keyframes pg-hop { 40% { transform: translateY(-10px) scaleX(var(--face, 1)); } }
+.pg-hint { position: absolute; right: -6px; top: -10px; display: grid; place-items: center; width: 32px; height: 22px; border-radius: 11px;
+  background: #fff; color: #14322B; font: 700 15px/1 var(--font-body); box-shadow: 0 6px 14px rgba(20,50,43,.18); animation: pg-hint 1.6s ease-in-out infinite; }
+@keyframes pg-hint { 50% { transform: translateY(-4px); } }
+.pg-bubble { width: min(320px, calc(100vw - 24px)); }
