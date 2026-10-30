@@ -1,0 +1,37 @@
+---
+// The site's name and links, built into the top of the hero / page block (no separate header bar).
+interface Props { current?: string; light?: boolean }
+const { current = '', light = false } = Astro.props;
+const links = [
+  { href: '/financial-planning', label: 'Financial planning' },
+  { href: '/wills-and-estates', label: 'Wills & estates' },
+  { href: '/check', label: 'Your sunflower' },
+  { href: '/articles', label: 'Articles' },
+  { href: '/contact', label: 'Contact' },
+];
+---
+<div class={`toprow ${light ? 'is-light' : ''}`}>
+  <a class="tr-brand" href="/">
+    <svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M16 29V13" /><path d="M16 18c-6 0-9-4-9-9 5 0 9 3 9 9z" fill="currentColor" fill-opacity=".15" /><path d="M16 14c0-6 4-10 10-10 0 6-4 10-10 10z" fill="currentColor" fill-opacity=".15" />
+    </svg>
+    Magda Jordaan
+  </a>
+  <nav class="tr-links" aria-label="Main">
+    {links.map((l) => <a href={l.href} aria-current={current === l.href ? 'page' : undefined}>{l.label}</a>)}
+  </nav>
+</div>
+<style>
+  .toprow { display: flex; align-items: center; gap: 12px 28px; flex-wrap: wrap; position: relative; z-index: 3; }
+  .tr-brand { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-size: 22px; color: var(--ink); text-decoration: none; margin-right: auto; }
+  .tr-brand svg { color: var(--leaf); }
+  .tr-links { display: flex; gap: 22px; flex-wrap: wrap; }
+  .tr-links a { color: var(--ink-2); text-decoration: none; font-weight: 600; font-size: 15px; position: relative; }
+  .tr-links a::after { content: ''; position: absolute; left: 0; right: 0; bottom: -4px; height: 2px; background: var(--leaf); transform: scaleX(0); transform-origin: left; transition: transform .3s var(--ease); }
+  .tr-links a:hover::after, .tr-links a[aria-current='page']::after { transform: scaleX(1); }
+  @media (max-width: 760px) {
+    .tr-links { width: 100%; overflow-x: auto; flex-wrap: nowrap; gap: 16px; white-space: nowrap; scrollbar-width: none; padding-bottom: 2px; }
+    .tr-links::-webkit-scrollbar { display: none; }
+    .tr-links a { font-size: 14px; }
+  }
+</style>

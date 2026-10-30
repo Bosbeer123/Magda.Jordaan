@@ -6,6 +6,7 @@ type Lead = {
   form?: string;
   name?: string;
   email?: string;
+  phone?: string;
   answers?: Record<string, string>;
   score?: number;
   marketingConsent?: boolean;
@@ -28,15 +29,23 @@ export default async (req: Request) => {
     return json(400, { error: 'Invalid JSON' });
   }
 
-  const email = String(body.email ?? '').trim().toLowerCase();
+  const email = String(body.email ?? '').trim().toLowerCase().slice(0, 200);
   const name = String(body.name ?? '').trim().slice(0, 120);
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !name) return json(400, { error: 'Name and a valid email are required' });
+  const phone = String(body.phone ?? '').replace(/[^\d+ ]/g, '').trim().slice(0, 20);
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const phoneOk = phone.replace(/\D/g, '').length >= 9;
+  // A call-back needs a phone number; everything else needs an email. Name always.
+  if (!name || (body.form === 'callback' ? !phoneOk : !emailOk)) return json(400, { error: 'Name and a way to reach you are required' });
+  // Answers are small key/value pairs; cap them so nobody can post a novel.
+  const answers: Record<string, string> = {};
+  for (const [k, v] of Object.entries(body.answers ?? {}).slice(0, 30)) answers[String(k).slice(0, 40)] = String(v).slice(0, 300);
+  if (phone) answers.phone = phone;
 
   const row = {
     form: String(body.form ?? 'unknown').slice(0, 40),
     name,
-    email,
-    answers: body.answers ?? null,
+    email: emailOk ? email : '',
+    answers: Object.keys(answers).length ? answers : null,
     score: typeof body.score === 'number' ? body.score : null,
     marketing_consent: body.marketingConsent === true,
     consent_ip: req.headers.get('x-nf-client-connection-ip') ?? null,
@@ -63,7 +72,7 @@ export default async (req: Request) => {
   // Optional: add to MailerLite. The report sequence is triggered by the group;
   // the articles group only when the person ticked the consent box.
   const ml = process.env.MAILERLITE_API_KEY;
-  if (ml) {
+  if (ml && emailOk) {
     const groups = [process.env.MAILERLITE_GROUP_REPORT];
     if (row.marketing_consent) groups.push(process.env.MAILERLITE_GROUP_ARTICLES);
     const mlRes = await fetch('https://connect.mailerlite.com/api/subscribers', {

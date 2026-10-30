@@ -1,20 +1,21 @@
 ---
 import '../styles/global.css';
-import { site, compliance } from '../config/site';
+import { site, compliance, linkedin } from '../config/site';
+import ParrotGuide from '../components/ParrotGuide';
+import Fact from '../components/Fact.astro';
 
 interface Props {
   title: string;
   description: string;
-  /** Show the "legal services are not FAIS" flag at the top of the page. */
+  /** Show the "legal services are not FAIS" note on the page. */
   legal?: boolean;
 }
 const { title, description, legal = false } = Astro.props;
-const path = Astro.url.pathname.replace(/\.html$/, '');
+const path = Astro.url.pathname.replace(/\.html$/, '') || '/';
 const nav = [
-  { href: '/', label: 'Home' },
   { href: '/financial-planning', label: 'Financial planning' },
   { href: '/wills-and-estates', label: 'Wills & estates' },
-  { href: '/check', label: 'Estate check' },
+  { href: '/check', label: 'Your sunflower' },
   { href: '/articles', label: 'Articles' },
   { href: '/contact', label: 'Contact' },
 ];
@@ -27,36 +28,58 @@ const fullTitle = path === '/' ? `${site.name} · Financial Adviser and Attorney
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
+    {!site.launched && <meta name="robots" content="noindex, nofollow" />}
     <link rel="canonical" href={new URL(path, Astro.site)} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#F5F1E8" />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
+    <meta property="og:image" content={new URL('/og.jpg', Astro.site)} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:url" content={new URL(path, Astro.site)} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=Source+Sans+3:wght@400;600;700&display=swap"
+    />
   </head>
   <body>
-    <header class="site-header">
-      <div class="wrap">
-        <a class="brand" href="/">{site.name}</a>
-        <nav class="nav" aria-label="Main">
-          {nav.map((n) => (
-            <a href={n.href} aria-current={path === n.href ? 'page' : undefined}>{n.label}</a>
-          ))}
-        </nav>
-      </div>
-    </header>
-
-    <main class="wrap">
-      {legal && <p class="legal-flag">{compliance.legalServicesFlag}</p>}
+    <main>
       <slot />
+      {legal && <div class="wrap"><p class="legal-flag">{compliance.legalServicesFlag}</p></div>}
     </main>
 
     <footer class="site-footer">
       <div class="wrap">
-        <p><strong>{site.name}</strong> · {site.address} · {site.phone} · {site.email}</p>
-        <p>{compliance.fspFooter}</p>
+        <p><strong>{site.name}</strong> · {site.address} · <Fact value={site.phone} kind="phone" missing="Phone number" /> · <Fact value={site.email} kind="email" missing="Email" />{linkedin && <> · <a class="li-link" href={linkedin.href} target="_blank" rel="noopener me"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM3 9.75h4v11H3v-11Zm6.5 0h3.8v1.5h.06c.53-.95 1.83-1.95 3.77-1.95 4.03 0 4.77 2.5 4.77 5.75v5.7h-4v-5.05c0-1.2-.02-2.75-1.7-2.75-1.7 0-1.95 1.3-1.95 2.65v5.15h-4v-11Z"/></svg>LinkedIn</a></>}</p>
+        <p><span class="momentum">Momentum Consult</span> · {compliance.fspFooter}</p>
         <p>{compliance.legalServicesFlag}</p>
-        <p>{compliance.generalInfo} <a href="/privacy">Privacy notice</a> · <a href="/paia">PAIA manual</a></p>
+        <p>{compliance.generalInfo}</p>
+        <nav class="links" aria-label="Footer">{nav.map((n) => <a href={n.href}>{n.label}</a>)}<a href="/report-a-death">Reporting a death</a><a href="/privacy">Privacy notice (POPIA)</a><a href="/paia">PAIA manual</a></nav>
       </div>
     </footer>
+
+    <ParrotGuide client:idle />
+
+    <script>
+      // Smooth scroll reveals: anything with .reveal (or a .grow/.bud on its own) fades and grows in when seen.
+      const els = document.querySelectorAll('.reveal, svg.grow-on-view');
+      if (!('IntersectionObserver' in window)) els.forEach((e) => e.classList.add('in'));
+      else {
+        const io = new IntersectionObserver((entries) => {
+          for (const e of entries) if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+        }, { rootMargin: '0px 0px -8% 0px', threshold: 0.12 });
+        els.forEach((e) => io.observe(e));
+      }
+      // Measure every growing stroke so it draws exactly once.
+      document.querySelectorAll<SVGPathElement>('path.grow').forEach((p) => {
+        try { p.style.setProperty('--len', String(Math.ceil(p.getTotalLength()) + 2)); } catch { /* not rendered */ }
+      });
+    </script>
   </body>
 </html>

@@ -1,34 +1,42 @@
 ---
 import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
 ---
 <Base
   title="Financial planning"
   description="Financial planning for individuals and businesses in Centurion: life cover, retirement, investments, medical aid and employee benefits."
 >
-  <article class="prose">
-    <h1>Financial planning</h1>
-    <p>
-      I look at the whole picture: what you have, what you owe, who depends on you, and what happens to all of it
-      if you die or can't work. Then we fix the gaps, one at a time.
-    </p>
-
-    <h2>For you and your family</h2>
-    <ul>
-      <li>Life, disability and dread-disease cover</li>
-      <li>Retirement planning and investments</li>
-      <li>Medical aid and gap cover</li>
-      <li>Motor and household insurance</li>
-    </ul>
-
-    <h2>For your business</h2>
-    <ul>
-      <li>Employee benefits and group life</li>
-      <li>Buy-and-sell and key-person cover</li>
-    </ul>
-
-    <p>
-      Objective advice across a range of providers, including Momentum and Sanlam.
-    </p>
-    <p><a class="btn" href="/contact">Book a conversation</a></p>
-  </article>
+  <PageHead
+    eyebrow="Momentum Consult · Castle Gate"
+    title="Health and prosperity, planned properly"
+    intro="I look at the whole picture: what you have, what you owe, who depends on you, and what happens to all of it if you die or can't work. Then we fix the gaps, one at a time."
+  />
+  <section>
+    <div class="wrap stack" style="gap:32px">
+      <span class="badge-momentum">Momentum Consult · financial planning</span>
+      <div class="grid-2">
+        <article class="card stack">
+          <h3 style="font-size:26px">For you and your family</h3>
+          <ul class="list">
+            <li>Life, disability and income protection</li>
+            <li>Dread-disease cover</li>
+            <li>Retirement planning and investments</li>
+            <li>Medical aid and gap cover</li>
+            <li>Motor and household insurance</li>
+          </ul>
+        </article>
+        <article class="card stack">
+          <h3 style="font-size:26px">For your business</h3>
+          <ul class="list">
+            <li>Employee benefits and group life</li>
+            <li>Buy-and-sell and key-person cover</li>
+            <li>Business insurance</li>
+          </ul>
+        </article>
+      </div>
+      <p class="lead" style="max-width:720px">Objective advice across a range of product providers, including <span class="momentum">Momentum</span> and Sanlam.</p>
+      <div class="btn-row"><a class="btn btn-red" href="/contact">Book a 20-minute call</a><a class="btn btn-ghost" href="/check">Plant your sunflower first</a></div>
+    </div>
+  </section>
 </Base>
+<style>.list { margin: 0; padding-left: 20px; line-height: 1.8; }</style>

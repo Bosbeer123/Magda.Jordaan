@@ -1,0 +1,22 @@
+---
+// Renders one fact from src/config/site.ts. While a fact is still a [PLACEHOLDER], it shows a soft
+// "to be added" chip instead of square brackets, so a test version looks finished but honest.
+interface Props {
+  value: string;
+  kind?: 'text' | 'phone' | 'email';
+  /** What the chip says while the value is missing, e.g. "phone number". */
+  missing?: string;
+}
+const { value, kind = 'text', missing = 'to be added' } = Astro.props;
+const pending = value.startsWith('[');
+const tel = value.replace(/[^\d+]/g, '');
+---
+{pending ? (
+  <span class="tbc" title="Still to be added">{missing} coming soon</span>
+) : kind === 'phone' ? (
+  <a href={`tel:${tel}`}>{value}</a>
+) : kind === 'email' ? (
+  <a href={`mailto:${value}`}>{value}</a>
+) : (
+  <>{value}</>
+)}

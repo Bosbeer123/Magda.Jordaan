@@ -1,9 +1,12 @@
 ---
+import PageHead from '../components/PageHead.astro';
 import Base from '../layouts/Base.astro';
 ---
 <Base title="Page not found" description="This page doesn't exist.">
-  <div class="prose">
-    <h1>That page isn't here</h1>
-    <p><a href="/">Back to the home page</a>, or <a href="/check">take the estate check</a>.</p>
+  <PageHead title="That page isn't here" />
+  <section>
+    <div class="wrap prose">
+    <p><a href="/">Back to the home page</a>, or <a href="/check">plant your family’s sunflower</a>.</p>
   </div>
+  </section>
 </Base>

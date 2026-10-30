@@ -1,4 +1,5 @@
 ---
+import PageHead from '../../components/PageHead.astro';
 import Base from '../../layouts/Base.astro';
 import { getCollection, render } from 'astro:content';
 import { compliance } from '../../config/site';
@@ -12,12 +13,13 @@ const { Content } = await render(article);
 const date = article.data.date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' });
 ---
 <Base title={article.data.title} description={article.data.description} legal={article.data.legal}>
-  <article class="prose">
-    <p class="muted small ui">{date}</p>
-    <h1>{article.data.title}</h1>
+  <PageHead eyebrow={date} title={article.data.title} intro={article.data.description} />
+  <section>
+    <div class="wrap prose">
     <Content />
     <hr />
     <p class="muted small">{compliance.postDisclaimer}</p>
-    <p><a class="btn" href="/check">Take the estate check</a></p>
-  </article>
+    <p><a class="btn btn-primary" href="/check">Plant your family’s sunflower</a></p>
+  </div>
+  </section>
 </Base>

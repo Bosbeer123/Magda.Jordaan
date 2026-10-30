@@ -17,9 +17,17 @@ export const site = {
   areas: ['Centurion', 'Lyttelton', 'Irene', 'Midstream', 'Pretoria East'],
 
   lawPractice: '[M Jordaan Attorney — confirm registered name]',
-  linkedin: '[LINKEDIN URL]',
+  linkedin: 'https://www.linkedin.com/in/magda-jordaan-a0766371/',
   bookingUrl: '[CAL.COM BOOKING LINK]',
+
+  /** false = test version: search engines are asked not to index it. Set true on launch day. */
+  launched: false,
 } as const;
+
+/** Magda's LinkedIn profile, or null while it is still a [PLACEHOLDER] (the link is then only shown in dev, pointing to #). */
+export const linkedin: { href: string; real: boolean } | null = !site.linkedin.startsWith('[')
+  ? { href: site.linkedin, real: true }
+  : import.meta.env.DEV ? { href: '#', real: false } : null;
 
 // Compliance text. Wording agreed in the plan; do not edit without Momentum Consult sign-off.
 export const compliance = {

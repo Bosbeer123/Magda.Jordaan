@@ -1,15 +1,18 @@
 ---
+import Fact from '../components/Fact.astro';
+import PageHead from '../components/PageHead.astro';
 import Base from '../layouts/Base.astro';
 import { site, compliance } from '../config/site';
 // DRAFT STRUCTURE ONLY. Magda (as Information Officer) must approve the final text.
 ---
 <Base title="Privacy notice" description="How Magda Jordaan collects, uses and protects personal information under POPIA.">
-  <article class="prose">
-    <h1>Privacy notice</h1>
+  <PageHead title="Privacy notice" />
+  <section>
+    <div class="wrap prose">
     <p class="todo">DRAFT — to be completed and approved by Magda before launch. Version {compliance.privacyNoticeVersion}.</p>
 
     <h2>Who is responsible</h2>
-    <p>{site.name}, {site.address}. Information Officer: {site.name} ({site.email}).</p>
+    <p>{site.name}, {site.address}. Information Officer: {site.name} (<Fact value={site.email} kind="email" missing="Email" />).</p>
 
     <h2>What I collect, and why</h2>
     <ul>
@@ -28,12 +31,13 @@ import { site, compliance } from '../config/site';
     <p>Only me and the person who maintains this website. I never sell or share your information.</p>
 
     <h2>How long I keep it</h2>
-    <p><span class="todo">[Retention period]</span></p>
+    <p>Enquiries that don&rsquo;t lead to working together are deleted within 12 months. Client records are kept for as long as the law requires: at least five years for financial advice records under FAIS.</p>
 
     <h2>Your rights</h2>
     <p>
-      You may ask to see, correct or delete your information, and object to direct marketing, by emailing {site.email}.
+      You may ask to see, correct or delete your information, and object to direct marketing, by emailing <Fact value={site.email} kind="email" missing="Email" />.
       You may complain to the Information Regulator (inforegulator.org.za).
     </p>
-  </article>
+  </div>
+  </section>
 </Base>

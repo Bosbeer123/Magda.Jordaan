@@ -1,19 +1,117 @@
 ---
 import Base from '../layouts/Base.astro';
-import { site } from '../config/site';
+import PageHead from '../components/PageHead.astro';
+import Fact from '../components/Fact.astro';
+import { site, linkedin, compliance } from '../config/site';
+const whatsapp = site.whatsapp.startsWith('[') ? null : `https://wa.me/${site.whatsapp}`;
+const booking = site.bookingUrl.startsWith('[') ? '#callback' : site.bookingUrl;
 ---
-<Base title="Contact" description="Phone, WhatsApp or book a time with Magda Jordaan in Lyttelton, Centurion.">
-  <article class="prose">
-    <h1>Talk to me</h1>
-    <p>The quickest way is a phone call or a WhatsApp. I answer people, not inboxes.</p>
-    <ul>
-      <li><strong>Phone:</strong> {site.phone}</li>
-      <li><strong>WhatsApp:</strong> {site.whatsapp}</li>
-      <li><strong>Email:</strong> {site.email}</li>
-      <li><strong>Office:</strong> {site.address}</li>
-      <li><strong>Hours:</strong> {site.officeHours}</li>
-    </ul>
-    <p><a class="btn" href={site.bookingUrl}>Book a 15-minute will review</a></p>
-    <p class="muted small">I work across {site.areas.join(', ')}.</p>
-  </article>
+<Base title="Contact" description="Phone, WhatsApp or ask Magda Jordaan to call you back. Lyttelton, Centurion.">
+  <PageHead
+    title="Phone me. It is still the fastest way."
+    intro="A first conversation costs nothing and I will tell you plainly whether you need me. I answer people, not inboxes."
+  />
+  <section>
+    <div class="wrap contact-grid">
+      <div class="stack" style="gap:10px">
+        <p><strong>Phone:</strong> <Fact value={site.phone} kind="phone" missing="Number" /></p>
+        <p><strong>WhatsApp:</strong> {whatsapp ? <a href={whatsapp}>Message me</a> : <Fact value={site.whatsapp} missing="Number" />}</p>
+        <p><strong>Email:</strong> <Fact value={site.email} kind="email" missing="Address" /></p>
+        {linkedin && <p><strong>LinkedIn:</strong> <a href={linkedin.href} target="_blank" rel="noopener me">Connect with me</a></p>}
+        <p><strong>Office:</strong> {site.address}</p>
+        <p><strong>Hours:</strong> <Fact value={site.officeHours} missing="Hours" /> · home and hospital visits by arrangement</p>
+        <div class="btn-row" style="margin-top:12px">
+          <a class="btn btn-primary" href={booking}>Book a 15-minute will review</a>
+          {whatsapp && <a class="btn btn-ghost" href={whatsapp}>WhatsApp me</a>}
+        </div>
+        <p class="muted small" style="margin-top:12px">I work across {site.areas.join(', ')}.</p>
+        <a class="map-card" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(site.address)}`} target="_blank" rel="noopener">
+          <span class="map-addr">{site.address}</span>
+          <span class="map-go">Open in Google Maps →</span>
+        </a>
+      </div>
+
+      <form class="block callback" id="callback" data-parrot-stop="contact" novalidate>
+        <h2 class="h3">Rather I phone you?</h2>
+        <p class="muted">Leave your number and I&rsquo;ll call you back, usually the same working day.</p>
+        <label for="cb-name">Your name</label>
+        <input id="cb-name" name="name" type="text" autocomplete="name" required />
+        <label for="cb-phone">Phone number</label>
+        <input id="cb-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" required />
+        <label for="cb-email">Email <span class="muted">(optional)</span></label>
+        <input id="cb-email" name="email" type="email" autocomplete="email" />
+        <label for="cb-topic">What is it about?</label>
+        <select id="cb-topic" name="topic">
+          <option>A will, or checking my will</option>
+          <option>Someone close to me has died</option>
+          <option>Financial planning</option>
+          <option>Protecting my income and health</option>
+          <option>Something else</option>
+        </select>
+        <label for="cb-when">Best time to call</label>
+        <select id="cb-when" name="when">
+          <option>Any time</option>
+          <option>Morning</option>
+          <option>Afternoon</option>
+          <option>After 5pm</option>
+        </select>
+        <label class="check-row" style="margin-top:14px">
+          <input type="checkbox" name="marketing" />
+          <span>Send me Magda&rsquo;s occasional articles by email. (Optional, and you can stop them any time.)</span>
+        </label>
+        <p class="small muted" style="margin:10px 0 14px">
+          I use your details only to call you back. See the <a href="/privacy">privacy notice</a>. {compliance.generalInfo}
+        </p>
+        <button class="btn btn-primary" type="submit">Please call me</button>
+        <p class="cb-msg" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
 </Base>
+
+<script>
+  const form = document.getElementById('callback') as HTMLFormElement | null;
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = form.querySelector('.cb-msg') as HTMLElement;
+    const btn = form.querySelector('button') as HTMLButtonElement;
+    const f = new FormData(form);
+    const name = String(f.get('name') ?? '').trim();
+    const phone = String(f.get('phone') ?? '').trim();
+    if (!name || phone.replace(/\D/g, '').length < 9) {
+      msg.textContent = 'Please add your name and a phone number I can call.';
+      msg.className = 'cb-msg err';
+      return;
+    }
+    btn.disabled = true; btn.textContent = 'Sending…'; msg.textContent = '';
+    try {
+      const r = await fetch('/api/lead', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          form: 'callback', name, phone, email: String(f.get('email') ?? ''),
+          answers: { topic: String(f.get('topic')), when: String(f.get('when')) },
+          marketingConsent: f.get('marketing') === 'on',
+        }),
+      });
+      if (!r.ok) throw new Error(String(r.status));
+      form.innerHTML = '<h2 class="h3">Thank you. I&rsquo;ll phone you soon.</h2><p class="muted">If it&rsquo;s urgent, phone the office directly.</p>';
+    } catch {
+      btn.disabled = false; btn.textContent = 'Please call me';
+      msg.textContent = 'That didn’t go through. Please try again, or phone or WhatsApp me.';
+      msg.className = 'cb-msg err';
+    }
+  });
+</script>
+
+<style>
+  .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
+  .map-card { display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; min-height: 160px; margin-top: 18px; padding: 22px; border-radius: var(--r, 20px); background: var(--sage); color: var(--ink); text-decoration: none; }
+  .map-addr { font-family: var(--font-display); font-size: 22px; }
+  .map-go { font-weight: 600; color: var(--leaf); }
+  .callback { display: flex; flex-direction: column; padding: 28px; background: #fff; }
+  .callback .h3 { margin: 0 0 4px; }
+  .callback select { width: 100%; min-height: 52px; padding: 0 12px; font: 17px var(--font-body); color: var(--ink); border: 1.5px solid var(--field); border-radius: var(--r-sm); background: #fff; }
+  .cb-msg { min-height: 1.4em; margin-top: 10px; font-weight: 600; }
+  .cb-msg.err { color: var(--momentum); }
+  @media (max-width: 860px) { .contact-grid { grid-template-columns: 1fr; gap: 32px; } .callback { padding: 22px 18px; } }
+</style>

@@ -9,7 +9,8 @@ Read first: `docs/BRIEF.md` (what we're building), `docs/COMPLIANCE.md` (rules t
 
 ## Stack
 - **Astro** (static site) on **Netlify**. Pages are `.astro` files in `src/pages`; every page is pre-rendered HTML so Google can read it.
-- **React** only for interactive pieces ("islands"), e.g. `src/components/EstateCheck.tsx` loaded with `client:load`. Do not turn whole pages into React.
+- **React** only for interactive pieces ("islands"): the Sunflower (`SunflowerTest.tsx`) and the parrot guide (`ParrotGuide.tsx`). Do not turn whole pages into React.
+- Design system "Garden" (`docs/design/README.md`): Momentum red only for Momentum Consult / financial planning; plants and the sunflower carry the brand. Mark scroll-in elements with `.reveal`.
 - **Articles** are Markdown files in `src/content/articles` (schema in `src/content.config.ts`). `draft: true` never reaches the live site.
 - **Netlify Functions** in `netlify/functions` for anything that needs a secret (e.g. `/api/lead`).
 - **Supabase** (own project, EU region) for leads. SQL changes go in `supabase/migrations/NNNN_name.sql`, numbered, never edited after they've been run.

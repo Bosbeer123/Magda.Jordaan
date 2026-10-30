@@ -21,7 +21,7 @@ Keep every password in a password manager and share it with her.
    ```
 3. Open http://localhost:4321
 
-**Check:** the home page shows "The adviser who has wound up the estates…" and the estate check works
+**Check:** the home page shows "The adviser who has wound up the estates…" and the Sunflower activity works
 (the email step will say "Something went wrong" until step 3 and 4 are done; that's expected).
 
 ---
@@ -84,24 +84,29 @@ Do **not** add this to the Onside organisation or the OnsideAPP project.
 4. **Deploys → Trigger deploy → Deploy project**. Rename the site under **Project configuration → Change project name**
    (e.g. `magda-jordaan` → `magda-jordaan.netlify.app`).
 
-**Check:** open the `.netlify.app` link, do the estate check with your own email, submit → "Thank you".
+**Check:** open the `.netlify.app` link, play the Sunflower and send yourself the plan, and send a call-back request on `/contact` → both say "Thank you" and appear in the Supabase `leads` table.
 In Supabase **Table Editor → leads** your row is there, with the consent fields filled in.
 
 From now on: every `git push` to `main` redeploys the site automatically.
 
 ---
 
-## 5. The domain
+## 5. The domain (at launch, not before)
 
-1. Check and register **magdajordaan.co.za** (first choice; `.com` as a backup) at any SA registrar
-   (e.g. Afrihost, Xneelo, Domains.co.za). The **registrant must be Magda**, not you or Onside.
+The test version runs on the `.netlify.app` address and asks search engines not to index it
+(`launched: false` in `src/config/site.ts` adds a noindex tag and a "Disallow" robots.txt).
+
+On launch day:
+1. Register **magdajordaan.com** (checked free with the .com registry, Oct 2026; `magdajordaan.co.za` is taken)
+   at any SA registrar (e.g. Afrihost, Xneelo, Domains.co.za). The **registrant must be Magda**, not you or Onside.
    You only need the domain, not their hosting.
-2. Netlify → **Domain management → Add a domain** → `magdajordaan.co.za` → follow the steps.
+2. Netlify → **Domain management → Add a domain** → `magdajordaan.com` → follow the steps.
    Easiest: let Netlify manage DNS and change the nameservers at the registrar to the four Netlify gives you.
    Add `www` too; Netlify redirects one to the other and issues the HTTPS certificate itself.
-3. If the domain ends up different, change it in `astro.config.mjs` (`site:`) and `public/robots.txt`, then push.
+3. Set `launched: true` in `src/config/site.ts`, then push. Canonical links, the sitemap and robots.txt follow the
+   site's address automatically (Netlify's `URL` variable), so nothing else needs changing.
 
-**Check:** https://magdajordaan.co.za loads with the padlock (DNS can take a few hours).
+**Check:** https://magdajordaan.com loads with the padlock (DNS can take a few hours).
 
 > Want her email on the domain later (magda@…)? Google Workspace or Microsoft 365 add MX records in Netlify DNS.
 > Don't do this before checking whether Momentum Consult requires her to use her Consult email for client work.
@@ -117,7 +122,7 @@ From now on: every `git push` to `main` redeploys the site automatically.
 5. **Automations → New**: trigger "joins group `Estate check report`" → the report email, then the 6-week sequence.
 6. Add a custom field `estate_score` (number) so the email can mention the score.
 
-**Check:** do the estate check again → you appear in MailerLite and receive the report.
+**Check:** play the Sunflower again and send the plan → you appear in MailerLite and receive the report.
 
 ---
 

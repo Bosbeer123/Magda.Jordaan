@@ -1,50 +1,506 @@
 ---
 import Base from '../layouts/Base.astro';
-import { site } from '../config/site';
-// Starter copy. The chosen direction (docs/design/) replaces the layout; keep the voice:
-// short sentences, "I" not "we", no superlatives, no fear-selling, never "independent".
+import TopRow from '../components/TopRow.astro';
+import SunflowerTest from '../components/SunflowerTest';
+import { getCollection } from 'astro:content';
+import { site, linkedin } from '../config/site';
+import Fact from '../components/Fact.astro';
+// Garden design. Scenes fit the screen: 1 hero (intro + parrot + sunflower) · 2 the roots (pinned, grows as you scroll)
+// · 3 the sunflower activity · then the calm blocks. Red = Momentum. Voice: short, "I", plain, never "independent".
+
+const waNumber = site.whatsapp.startsWith('[') ? '' : site.whatsapp;
+
+// Hero scene (900 x 800 box): a tree on the right, Magda's portrait in the middle, and a bushy arch of sunflowers
+// that rises on the right, curves over the portrait and bends down and in towards the text, getting smaller and
+// wilting at the tip. Placed from a fixed seed, so it is random-looking but renders the same every time.
+let seed = 11;
+const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+type P = [number, number];
+const SPINE: P[] = [[884, 800], [884, 600], [866, 400], [824, 236], [744, 116], [622, 58], [492, 58], [382, 106], [304, 196], [266, 316], [266, 438], [292, 536], [336, 606]];
+const crPt = (p0: P, p1: P, p2: P, p3: P, t: number): P => {
+  const t2 = t * t, t3 = t2 * t;
+  return [0, 1].map((k) => 0.5 * (2 * p1[k] + (-p0[k] + p2[k]) * t + (2 * p0[k] - 5 * p1[k] + 4 * p2[k] - p3[k]) * t2 + (-p0[k] + 3 * p1[k] - 3 * p2[k] + p3[k]) * t3)) as P;
+};
+const dense: P[] = [];
+for (let i = 0; i < SPINE.length - 1; i++) {
+  const p0 = SPINE[Math.max(0, i - 1)], p3 = SPINE[Math.min(SPINE.length - 1, i + 2)];
+  for (let j = 0; j < 24; j++) dense.push(crPt(p0, SPINE[i], SPINE[i + 1], p3, j / 24));
+}
+dense.push(SPINE[SPINE.length - 1]);
+const cum = [0];
+for (let i = 1; i < dense.length; i++) cum.push(cum[i - 1] + Math.hypot(dense[i][0] - dense[i - 1][0], dense[i][1] - dense[i - 1][1]));
+const LEN = cum[cum.length - 1];
+const CENTRE: P = [560, 400];
+const at = (u: number) => {
+  const d = Math.max(0, Math.min(1, u)) * LEN;
+  let i = cum.findIndex((c) => c >= d); if (i < 1) i = 1;
+  const f = (d - cum[i - 1]) / (cum[i] - cum[i - 1] || 1);
+  const x = dense[i - 1][0] + (dense[i][0] - dense[i - 1][0]) * f, y = dense[i - 1][1] + (dense[i][1] - dense[i - 1][1]) * f;
+  const tx = dense[i][0] - dense[i - 1][0], ty = dense[i][1] - dense[i - 1][1], tl = Math.hypot(tx, ty) || 1;
+  let nx = -ty / tl, ny = tx / tl;
+  if (nx * (x - CENTRE[0]) + ny * (y - CENTRE[1]) < 0) { nx = -nx; ny = -ny; }
+  return { x, y, nx, ny, ang: Math.atan2(ny, nx) * 180 / Math.PI };
+};
+const r1 = (n: number) => Math.round(n * 10) / 10;
+// the stalk, in tapering segments
+const stalk = [0, .2, .4, .6, .8].map((u0, k) => {
+  const pts = Array.from({ length: 21 }, (_, j) => at(u0 + (j / 20) * 0.2));
+  return { d: 'M' + pts.map((p) => `${r1(p.x)} ${r1(p.y)}`).join(' L'), w: 15 - k * 2.8 };
+});
+const GREENS = ['#3F7A33', '#4E8B3A', '#5E9C47', '#6DA850', '#7FAE66', '#477F37'];
+const leaves = Array.from({ length: 300 }, () => {
+  const u = Math.pow(rnd(), 0.8), p = at(u), off = (rnd() * 2 - 0.8) * 44 * (1 - u * 0.4);
+  return { x: r1(p.x + p.nx * off), y: r1(p.y + p.ny * off), rot: Math.round(p.ang + (rnd() * 200 - 100)), k: r1((1.15 - u * 0.45) * (0.6 + rnd() * 0.55) * 10) / 10, c: GREENS[Math.floor(rnd() * GREENS.length)] };
+});
+type Head = { x: number; y: number; sx: number; s: number; rot: number; kind: 'a' | 'b' | 'droop' | 'bud'; bx: number; by: number };
+const head = (u: number, scale: number, outBias: number): Head => {
+  const p = at(u), q = (u - 0.16) / 0.84;
+  const s = (112 - 66 * Math.pow(Math.max(0, q), 1.7)) * scale * (0.74 + rnd() * 0.5);
+  const off = (rnd() * 1.4 - 0.45 + outBias) * s * 0.5, slide = (rnd() - 0.5) * s * 0.5;
+  const tx = -p.ny, ty = p.nx;
+  const kind = q > 0.84 && rnd() < 0.7 ? 'droop' : rnd() < 0.12 ? 'bud' : rnd() < 0.5 ? 'a' : 'b';
+  return { x: r1(p.x + p.nx * off + tx * slide), y: r1(p.y + p.ny * off + ty * slide), sx: r1((0.72 + rnd() * 0.28) * 100) / 100, s: Math.round(kind === 'bud' ? s * 0.42 : s), rot: Math.round(p.ang + 90 + (rnd() - 0.5) * 40), kind, bx: r1(p.x), by: r1(p.y) };
+};
+const backHeads = Array.from({ length: 30 }, (_, i) => head(0.18 + 0.78 * (i + rnd() * 0.8) / 30, 0.75, 0.75));
+const frontHeads = Array.from({ length: 42 }, (_, i) => head(0.15 + 0.85 * (i + rnd() * 0.7) / 42, 1, 0));
+const tip = at(1);
+const fallen = Array.from({ length: 5 }, (_, i) => ({ x: r1(tip.x - 30 + rnd() * 90), y: r1(tip.y + 30 + i * 18 + rnd() * 14), rot: Math.round(rnd() * 360) }));
+// a low bush along the ground so there is no empty space under the portrait
+const bush = Array.from({ length: 46 }, () => {
+  const x = 320 + rnd() * 580, y = 700 + rnd() * 100;
+  return { x: r1(x), y: r1(y), rot: Math.round(-160 + rnd() * 140), k: r1((0.6 + rnd() * 0.5) * 10) / 10, c: GREENS[Math.floor(rnd() * GREENS.length)] };
+});
+const bushHeads = Array.from({ length: 7 }, (_, i) => ({ x: r1(350 + i * 80 + rnd() * 50), y: r1(690 + rnd() * 50), s: Math.round(34 + rnd() * 26), rot: Math.round(rnd() * 60 - 30), sx: r1((0.75 + rnd() * 0.25) * 100) / 100 }));
+
+
+const whatsapp = waNumber ? `https://wa.me/${waNumber}` : '/contact';
+
+const published = (await getCollection('articles', ({ data }) => import.meta.env.DEV || !data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf()).slice(0, 3)
+  .map((a) => ({ topic: a.data.topic, title: a.data.title, blurb: a.data.description, href: `/articles/${a.id}` }));
+const planned = [
+  { topic: 'estates', title: 'The will in the drawer nobody knew about', blurb: 'Why where you keep your will matters almost as much as what is in it.', href: null },
+  { topic: 'estates', title: 'Why an estate takes a year, and how to make it months', blurb: 'The Master, the executor, SARS and the account that lies open for inspection.', href: null },
+  { topic: 'planning', title: 'Your beneficiary nomination beats your will. Check it.', blurb: 'The one-line form from fifteen years ago that still decides who gets your policy.', href: null },
+];
+const articles = [...published, ...planned.filter((p) => !published.some((a) => a.title === p.title))].slice(0, 3);
+const topicLabel: Record<string, string> = { estates: 'Estates', wills: 'Wills', planning: 'Planning', 'ask-magda': 'Ask Magda' };
+
+// The roots: what has to be in place underneath. Budget 2026 figures are proposals until legislated.
+const layers = [
+  { id: 'health', depth: 'Topsoil', name: 'Health', line: 'Protect today', by: 'momentum', cards: [
+    { t: 'Emergency money', d: 'Three to six months of living costs your person can reach. Accounts in your name freeze when you die.' },
+    { t: 'Medical aid and gap cover', d: 'Medical aid pays the hospital. Gap cover pays the difference when specialists charge more.' },
+    { t: 'Income protection', d: 'A monthly income if illness or injury stops you working. The bond doesn’t stop when you do.' },
+    { t: 'Critical illness cover', d: 'A lump sum on diagnosis of cancer, a heart attack or a stroke. For costs nobody budgets for.' },
+  ] },
+  { id: 'prosperity', depth: 'Deep roots', name: 'Prosperity', line: 'Grow what you have', by: 'momentum', cards: [
+    { t: 'Retirement annuity (RA)', d: 'Contributions are tax-deductible up to 27.5% of taxable income, within an annual cap (R430 000 proposed in Budget 2026).' },
+    { t: 'Tax-free savings', d: 'R46 000 a year (proposed in Budget 2026, up from R36 000), R500 000 in a lifetime. Growth is never taxed.' },
+    { t: 'Investments', d: 'Money you can reach before retirement, for the goals in between: a car, a deposit, a gap year.' },
+    { t: 'Life cover', d: 'Clears the bond and the debts, and replaces your income for the people who depend on it.' },
+  ] },
+  { id: 'longevity', depth: 'The taproot', name: 'Longevity', line: 'Hand it on, properly', by: 'attorney', cards: [
+    { t: 'A will', d: 'Everything else hangs from it. Without one, the Intestate Succession Act decides who inherits.' },
+    { t: 'A trust for your children', d: 'Holds their inheritance until an age you choose, instead of the Guardian’s Fund paying it out at 18.' },
+    { t: 'Executor and beneficiaries', d: 'An executor who has said yes. Policy nominations that name the right people: they pay out whatever your will says.' },
+    { t: 'Estate duty and cash', d: 'Estate duty is 20% above R3.5 million (25% above R30 million). Your estate needs cash to pay it, and the executor.' },
+  ] },
+];
 ---
 <Base
   title="Home"
-  description="Magda Jordaan, Financial Adviser and admitted attorney in Centurion. Estate planning, wills and financial planning, explained plainly."
+  description="Magda Jordaan, Financial Adviser with Momentum Consult and admitted attorney in Centurion. Health, prosperity and longevity for your family, planned in plain language."
 >
-  <section class="prose">
-    <p class="muted ui small">{site.roles} · Centurion</p>
-    <h1>{site.tagline}</h1>
-    <p>
-      I spent years as an attorney winding up deceased estates. I saw what families go through when the will
-      can't be found, the policies name the wrong person, or there is no cash to keep the house running.
-      Now I help people plan so their family never has to find out the hard way.
-    </p>
-    <p>
-      <a class="btn" href="/check">Take the 2-minute estate check</a>
-      &nbsp;
-      <a class="btn secondary" href="/contact">Talk to me</a>
-    </p>
+  <!-- ① Hero scene: intro, parrot, sunflower. One screen, still. -->
+  <section class="scene hero-scene snap" data-facts="home">
+    <div class="sky" aria-hidden="true"><span class="sun"></span></div>
+    <div class="wrap hero-wrap">
+      <TopRow current="/" />
+      <div class="hero-grid">
+        <div class="hero-text">
+          <p class="eyebrow">Financial adviser · Admitted attorney · Centurion</p>
+          <h1 class="hero-title">I&rsquo;ve wound up the estates that bad planning leaves behind.</h1>
+          <p class="lead">
+            So now I help families plan while there&rsquo;s time: financial planning through{' '}
+            <span class="momentum">Momentum Consult</span>, wills and estates as an attorney.
+          </p>
+          <div class="ask-wrap" style="position:relative">
+          <span class="perch-mobile" data-parrot-home aria-hidden="true"></span>
+          <div class="ask-menu" data-parrot-menu>
+            <noscript><p><a class="btn btn-primary" href="/check">Plant your family&rsquo;s sunflower</a></p></noscript>
+          </div>
+          </div>
+        </div>
+        <div class="hero-stage">
+          <div class="scene-box">
+            <svg class="arch" viewBox="0 0 900 800" aria-hidden="true">
+              <defs>
+                <linearGradient id="sp" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#EFA20A" /><stop offset="1" stop-color="#FFD24A" /></linearGradient>
+                <radialGradient id="canopy" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#9DBF84" /><stop offset="1" stop-color="#5E8D4E" /></radialGradient>
+                <symbol id="sfSoft" viewBox="-50 -50 100 100" overflow="visible">
+                  {Array.from({ length: 16 }, (_, i) => <path d="M0 -16 C 9 -22, 10 -38, 0 -47 C -10 -38, -9 -22, 0 -16 Z" fill="url(#sp)" transform={`rotate(${i * 22.5})`} />)}
+                  {Array.from({ length: 16 }, (_, i) => <path d="M0 -16 C 6 -21, 7 -31, 0 -38 C -7 -31, -6 -21, 0 -16 Z" fill="#F4B000" opacity=".55" transform={`rotate(${i * 22.5 + 11.25})`} />)}
+                  <circle r="18" fill="#5A3A1C" /><circle r="12" fill="#3E2611" /><circle r="18" fill="none" stroke="#8C6526" stroke-width="2.5" stroke-dasharray="1.5 2.5" />
+                </symbol>
+                <symbol id="sfLeafSoft" viewBox="0 -20 60 40" overflow="visible">
+                  <path d="M0 0 C 8 -14, 30 -22, 50 -14 C 58 -10, 60 -4, 58 0 C 56 4, 50 12, 36 14 C 20 16, 6 8, 0 0 Z" fill="currentColor" />
+                  <path d="M2 0 C 20 -2, 40 -2, 56 -1 M22 -1 L 32 -11 M22 -1 L 32 9 M38 -1 L 46 -9 M38 -1 L 46 7" fill="none" stroke="#2F5F2A" stroke-width="1.3" opacity=".45" />
+                </symbol>
+                <symbol id="sfSoft2" viewBox="-50 -50 100 100" overflow="visible">
+                  {Array.from({ length: 20 }, (_, i) => <path d={`M0 -15 C 7 -21, 8 ${-36 - (i % 3) * 3}, 0 ${-46 - (i % 3) * 2} C -8 ${-36 - (i % 3) * 3}, -7 -21, 0 -15 Z`} fill={i % 2 ? '#F2A70E' : 'url(#sp)'} transform={`rotate(${i * 18 + (i % 4) * 2})`} />)}
+                  <circle r="17" fill="#4C2F15" /><circle r="11" fill="#33200D" /><circle r="16" fill="none" stroke="#9A7029" stroke-width="2" stroke-dasharray="1.2 2.2" />
+                </symbol>
+                <symbol id="sfDroop" viewBox="-50 -50 100 100" overflow="visible">
+                  {Array.from({ length: 11 }, (_, i) => { const a = -100 + i * 20; return <path d="M0 -12 C 6 -18, 6 -30, 1 -40 C -5 -30, -6 -18, 0 -12 Z" fill={i % 3 ? '#D9951C' : '#B9781A'} transform={`rotate(${a + 180 + (i % 2) * 9})`} />; })}
+                  <circle r="15" fill="#5B3B1F" /><circle r="9" fill="#3B2512" />
+                </symbol>
+                <symbol id="sfBud" viewBox="-50 -50 100 100" overflow="visible">
+                  {Array.from({ length: 8 }, (_, i) => <path d="M0 -10 C 9 -16, 9 -30, 0 -40 C -9 -30, -9 -16, 0 -10 Z" fill="#6DA850" transform={`rotate(${i * 45})`} />)}
+                  {Array.from({ length: 8 }, (_, i) => <path d="M0 -8 C 5 -12, 5 -22, 0 -28 C -5 -22, -5 -12, 0 -8 Z" fill="#F4B000" transform={`rotate(${i * 45 + 22})`} />)}
+                  <circle r="14" fill="#4E8B3A" />
+                </symbol>
+              </defs>
+
+              <!-- the tree, behind everything -->
+              <g class="tree" transform="translate(-60 0)">
+                <path d="M846 800 C 838 700, 852 560, 830 430 C 820 370, 826 330, 818 290" fill="none" stroke="#7A5C47" stroke-width="30" stroke-linecap="round" />
+                <path d="M838 800 C 832 700, 842 560, 824 430" fill="none" stroke="#8C6C55" stroke-width="8" stroke-linecap="round" opacity=".5" />
+                <path d="M822 330 C 790 280, 740 230, 650 196" fill="none" stroke="#7A5C47" stroke-width="13" stroke-linecap="round" />
+                <path d="M760 250 C 740 226, 720 214, 700 210" fill="none" stroke="#7A5C47" stroke-width="6" stroke-linecap="round" />
+                <g class="sway" style="animation-duration:11s">
+                  <circle cx="800" cy="170" r="120" fill="url(#canopy)" opacity=".9" />
+                  <circle cx="880" cy="230" r="96" fill="#6E9A5B" opacity=".85" />
+                  <circle cx="720" cy="130" r="80" fill="#88B070" opacity=".85" />
+                  <circle cx="860" cy="100" r="74" fill="#7FA866" opacity=".9" />
+                  <circle cx="760" cy="250" r="64" fill="#6A9457" opacity=".8" />
+                </g>
+                <path d="M690 200 C 680 186, 664 180, 650 182 C 658 196, 674 204, 690 200 Z" fill="#6DA850" />
+                <path d="M730 214 C 728 230, 718 240, 704 244 C 704 230, 714 218, 730 214 Z" fill="#5E9C47" />
+                <rect data-parrot-home x="672" y="198" width="44" height="2" fill="transparent" />
+              </g>
+
+              <!-- low bush on the ground -->
+              {bush.map((l) => <use href="#sfLeafSoft" x="0" y="-20" width="60" height="40" transform={`translate(${l.x} ${l.y}) rotate(${l.rot}) scale(${l.k})`} style={`color:${l.c}`} />)}
+              {bushHeads.map((h) => <g transform={`translate(${h.x} ${h.y}) rotate(${h.rot}) scale(${h.sx} 1)`}><use href="#sfSoft2" x={-h.s / 2} y={-h.s / 2} width={h.s} height={h.s} /></g>)}
+
+              <!-- back row of heads, peeping from behind the arch -->
+              {backHeads.map((f) => (
+                <g opacity=".82">
+                  <path d={`M${f.bx} ${f.by} Q ${(f.bx + f.x) / 2 + 8} ${(f.by + f.y) / 2 + 10} ${f.x} ${f.y}`} fill="none" stroke="#6E9C59" stroke-width={Math.max(2, f.s / 20)} stroke-linecap="round" />
+                  <g class="sway" style={`animation-delay:${-(f.x % 7)}s;animation-duration:${8 + (f.y % 4)}s`}>
+                    <g transform={`translate(${f.x} ${f.y}) rotate(${f.rot}) scale(${f.sx} 1)`}><use href={f.kind === 'b' ? '#sfSoft2' : f.kind === 'droop' ? '#sfDroop' : f.kind === 'bud' ? '#sfBud' : '#sfSoft'} x={-f.s / 2} y={-f.s / 2} width={f.s} height={f.s} /></g>
+                  </g>
+                </g>
+              ))}
+
+              <!-- the arching stalk -->
+              {stalk.map((sg) => <path d={sg.d} fill="none" stroke="#4E8B3A" stroke-width={sg.w} stroke-linecap="round" stroke-linejoin="round" />)}
+
+              <!-- leaves all along it -->
+              {leaves.map((l) => <use href="#sfLeafSoft" x="0" y="-20" width="60" height="40" transform={`translate(${l.x} ${l.y}) rotate(${l.rot}) scale(${l.k})`} style={`color:${l.c}`} />)}
+
+              <!-- front heads -->
+              {frontHeads.map((f) => (
+                <g>
+                  <path d={`M${f.bx} ${f.by} Q ${(f.bx + f.x) / 2 - 6} ${(f.by + f.y) / 2 + 8} ${f.x} ${f.y}`} fill="none" stroke="#4E8B3A" stroke-width={Math.max(2.5, f.s / 16)} stroke-linecap="round" />
+                  <g class="sway" style={`animation-delay:${-(f.x % 9)}s;animation-duration:${7 + (f.y % 5)}s`}>
+                    <g transform={`translate(${f.x} ${f.y}) rotate(${f.rot}) scale(${f.sx} 1)`}><use href={f.kind === 'b' ? '#sfSoft2' : f.kind === 'droop' ? '#sfDroop' : f.kind === 'bud' ? '#sfBud' : '#sfSoft'} x={-f.s / 2} y={-f.s / 2} width={f.s} height={f.s} /></g>
+                  </g>
+                </g>
+              ))}
+              {fallen.map((p) => <path d="M0 0 C 4 -4, 4 -12, 0 -16 C -4 -12, -4 -4, 0 0 Z" fill="#D9951C" opacity=".75" transform={`translate(${p.x} ${p.y}) rotate(${p.rot})`} />)}
+            </svg>
+            <div class="portrait">
+              <img src="/magda.webp" alt="Magda Jordaan" width="800" height="800" fetchpriority="high" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <svg class="horizon" viewBox="0 0 1440 120" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0 30 C 300 6, 640 40, 980 22 S 1300 12, 1440 26 V 120 H 0 Z" fill="#CFDDC4" />
+      <path d="M0 52 C 240 30, 480 58, 720 46 S 1200 30, 1440 50 V 120 H 0 Z" fill="#A9C59E" />
+      <path d="M0 74 C 300 62, 620 84, 960 70 S 1300 66, 1440 76 V 120 H 0 Z" fill="#5A4433" />
+    </svg>
+    <a class="dig" href="#roots">Scroll into the roots <span aria-hidden="true">↓</span></a>
   </section>
 
-  <h2>How I can help</h2>
-  <div class="grid">
-    <a class="card" href="/wills-and-estates">
-      <h3>Wills &amp; estates</h3>
-      <p class="muted">Wills, trusts, executor services and deceased estates.</p>
-    </a>
-    <a class="card" href="/financial-planning">
-      <h3>Financial planning</h3>
-      <p class="muted">Life cover, retirement, investments and medical aid, for you and your business.</p>
-    </a>
-    <a class="card" href="/check">
-      <h3>Estate readiness check</h3>
-      <p class="muted">Eight yes-or-no questions. See where your family would stand today.</p>
-    </a>
-  </div>
+  <!-- ② The roots: pinned scene, the roots grow as you scroll -->
+  <section class="roots" id="roots" data-facts="roots" aria-label="The roots: what has to be in place underneath">
+    {layers.map((l, i) => (
+      <div class="roots-anchor" style={`top:calc(300vh * ${0.2 + i * 0.28})`} data-parrot-stop={l.id} data-parrot-perch-on="#roots-perch" data-parrot-offset="0"></div>
+    ))}
+    <div class="roots-stage" data-active="-1">
+      <div class="wrap roots-grid">
+        <div class="roots-text">
+          <span id="roots-perch" class="roots-perch" aria-hidden="true"></span>
+          <div class="layer layer-intro">
+            <p class="eyebrow light">Underground</p>
+            <h2>Every sunflower stands on its roots.</h2>
+            <p class="soil-lead">What people see is the flower. What holds it up in a storm is underneath. Keep scrolling: these are the roots I help families put down.</p>
+          </div>
+          {layers.map((l, i) => (
+            <div class={`layer layer-${l.id}`} data-layer={i}>
+              <p class="eyebrow light">{l.depth}</p>
+              <h2>{l.name}<span>. {l.line}</span></h2>
+              <span class={l.by === 'momentum' ? 'badge-momentum' : 'badge-attorney dark'}>{l.by === 'momentum' ? 'Momentum Consult' : 'M Jordaan Attorney'}</span>
+              <ul class="root-cards">
+                {l.cards.map((c, j) => <li style={`--i:${j}`}><b>{c.t}</b><span>{c.d}</span></li>)}
+              </ul>
+              {l.id === 'prosperity' && <p class="fine">Budget 2026 figures are proposals until they are law.</p>}
+            </div>
+          ))}
+        </div>
+        <svg class="roots-svg" viewBox="0 0 600 900" preserveAspectRatio="xMidYMin meet" aria-hidden="true">
+          <path class="root root-tap" pathLength="1" d="M300 0 C 296 120, 308 240, 298 360 C 290 480, 306 600, 300 720 C 296 790, 302 850, 300 900" />
+          <g data-l="0">
+            <path class="root" pathLength="1" d="M300 60 C 250 80, 200 70, 140 110" /><circle class="node" cx="140" cy="110" r="8" />
+            <path class="root" pathLength="1" d="M302 90 C 360 110, 420 100, 480 140" /><circle class="node" cx="480" cy="140" r="8" />
+            <path class="root" pathLength="1" d="M298 170 C 240 190, 180 200, 110 240" /><circle class="node" cx="110" cy="240" r="8" />
+            <path class="root" pathLength="1" d="M301 200 C 360 220, 430 230, 500 270" /><circle class="node" cx="500" cy="270" r="8" />
+          </g>
+          <g data-l="1">
+            <path class="root" pathLength="1" d="M299 320 C 220 340, 140 360, 70 420" /><circle class="node gold" cx="70" cy="420" r="9" />
+            <path class="root" pathLength="1" d="M300 360 C 380 380, 470 400, 540 450" /><circle class="node gold" cx="540" cy="450" r="9" />
+            <path class="root" pathLength="1" d="M297 460 C 230 480, 170 500, 120 550" /><circle class="node gold" cx="120" cy="550" r="9" />
+            <path class="root" pathLength="1" d="M303 500 C 370 520, 430 540, 480 590" /><circle class="node gold" cx="480" cy="590" r="9" />
+          </g>
+          <g data-l="2">
+            <path class="root" pathLength="1" d="M300 640 C 250 670, 220 700, 190 760" /><circle class="node deep" cx="190" cy="760" r="10" />
+            <path class="root" pathLength="1" d="M301 680 C 350 710, 380 740, 410 800" /><circle class="node deep" cx="410" cy="800" r="10" />
+            <path class="root" pathLength="1" d="M299 780 C 270 810, 250 840, 240 880" /><circle class="node deep" cx="240" cy="880" r="10" />
+            <path class="root" pathLength="1" d="M300 820 C 330 840, 350 860, 360 895" /><circle class="node deep" cx="360" cy="895" r="10" />
+          </g>
+        </svg>
+        <ol class="depth" aria-hidden="true">
+          <li data-d="0">Topsoil</li><li data-d="1">Deep roots</li><li data-d="2">Taproot</li>
+        </ol>
+      </div>
+    </div>
+  </section>
 
-  <h2>Why people come to me</h2>
-  <div class="prose">
-    <p>
-      Objective advice across a range of providers, including Momentum and Sanlam. I say it the way it is,
-      I put the fees on the table, and I would rather you plan once and properly than buy something you don't need.
-    </p>
-    <p class="muted"><em>“{site.mission}”</em></p>
-  </div>
+  <!-- ③ The sunflower activity: one screen -->
+  <section class="scene sf-scene snap" id="check" data-facts="sunflower">
+    <div class="wrap sf-wrap" data-parrot-stop="score" data-parrot-offset="0">
+      <SunflowerTest client:visible whatsapp={waNumber} title="Plant your family’s sunflower. Then bring on the weather." />
+    </div>
+  </section>
+
+  <!-- ④ Calm blocks -->
+  <section>
+    <div class="wrap bento">
+      <div class="block span-7 reveal story">
+        <p class="quote">&ldquo;Awareness before desire.&rdquo;</p>
+        <p style="color:var(--ink-2)">
+          I started in underwriting, in senior roles at Liberty and Momentum. Then I qualified as an attorney and spent
+          years winding up deceased estates. Over and over I saw families who loved each other, left unprepared because
+          nobody told them the truth while there was still time. So that&rsquo;s the job now.
+        </p>
+        <ol class="steps">
+          <li><b>Underwriting</b> Liberty and Momentum</li>
+          <li><b>Attorney</b> deceased estates</li>
+          <li><b>Adviser</b> <span class="momentum">Momentum Consult</span> Castle Gate</li>
+        </ol>
+      </div>
+      <a class="block block-ink span-5 reveal death lift" style="--d:.1s" href="/report-a-death" data-parrot-stop="death" data-facts="death">
+        <p class="eyebrow" style="color:var(--moss)">If someone has just died</p>
+        <h3>Breathe. Here is what to do first, in order.</h3>
+        <p style="color:#C9D8CF">The estate must be reported to the Master within 14 days. The checklist shows every document. Or phone me, and I&rsquo;ll carry it.</p>
+        <span class="more" style="color:#fff;font-weight:600;margin-top:auto">The first steps →</span>
+      </a>
+    </div>
+  </section>
+
+  <section style="padding-top:0">
+    <div class="wrap stack" style="gap:24px">
+      <div class="reveal" style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
+        <div class="stack" style="gap:8px">
+          <h2 class="h2">Plain language, three times a week</h2>
+          <p style="color:var(--ink-2)">What I tell clients across the table, written down.</p>
+        </div>
+        <a href="/articles" style="font-weight:600">All articles →</a>
+      </div>
+      <div class="bento">
+        {articles.map((a, i) => (
+          <article class="block span-4 lift reveal stack" style={`--d:${i * 0.08}s;gap:12px`}>
+            <p class="eyebrow">{topicLabel[a.topic] ?? a.topic}</p>
+            <h3 style="font-size:24px;line-height:1.2">{a.title}</h3>
+            <p class="muted" style="font-size:16px">{a.blurb}</p>
+            {a.href ? <a href={a.href} style="font-weight:600;margin-top:auto">Read →</a> : <p class="muted small" style="margin-top:auto">Coming soon</p>}
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="block block-ink contact reveal" data-parrot-stop="contact" data-facts="contact">
+        <div class="stack">
+          <h2 class="h2">Phone me. It&rsquo;s still the fastest way.</h2>
+          <p style="color:#C9D8CF">A first conversation costs nothing, and I&rsquo;ll tell you plainly whether you need me.</p>
+          <div class="btn-row">
+            <a class="btn btn-primary" href="/contact#callback">Ask me to call you</a>
+            <a class="btn btn-ghost on-dark" href={whatsapp}>WhatsApp me</a>
+          </div>
+        </div>
+        <div class="stack contact-facts" style="gap:8px">
+          <p><strong>Phone</strong> <Fact value={site.phone} kind="phone" missing="Number" /></p>
+          <p><strong>Email</strong> <Fact value={site.email} kind="email" missing="Address" /></p>
+          <p><strong>Office</strong> {site.address}</p>
+          <p><strong>Hours</strong> <Fact value={site.officeHours} missing="Hours" /></p>
+          {linkedin && <p><strong>LinkedIn</strong> <a href={linkedin.href} target="_blank" rel="noopener me" style="color:#fff">Connect with me →</a></p>}
+          <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(site.address)}`} target="_blank" rel="noopener" style="color:var(--moss);font-weight:600">Open in Google Maps →</a>
+        </div>
+      </div>
+    </div>
+  </section>
 </Base>
+
+<script>
+  // The roots grow with scroll: progress through the pinned section draws each layer's roots and shows its cards.
+  const sec = document.querySelector<HTMLElement>('.roots');
+  const stage = sec?.querySelector<HTMLElement>('.roots-stage');
+  const groups = Array.from(sec?.querySelectorAll<SVGGElement>('.roots-svg g[data-l]') ?? []);
+  const tap = sec?.querySelector<SVGPathElement>('.root-tap');
+  const bounds = [[0.10, 0.36], [0.38, 0.64], [0.66, 0.92]];
+  let ticking = false;
+  function update() {
+    ticking = false;
+    if (!sec || !stage) return;
+    const r = sec.getBoundingClientRect();
+    const span = sec.offsetHeight - innerHeight;
+    const p = Math.min(1, Math.max(0, -r.top / span));
+    let active = -1;
+    bounds.forEach(([a, b], i) => {
+      const k = Math.min(1, Math.max(0, (p - a) / (b - a - 0.06)));
+      groups[i]?.querySelectorAll<SVGPathElement>('.root').forEach((path, j) => {
+        const kk = Math.min(1, Math.max(0, k * 1.25 - j * 0.08));
+        path.style.strokeDashoffset = String(1 - kk);
+      });
+      groups[i]?.querySelectorAll<SVGCircleElement>('.node').forEach((n, j) => n.classList.toggle('on', k * 1.25 - j * 0.08 > 0.95));
+      if (p >= a - 0.02) active = i;
+    });
+    if (tap) tap.style.strokeDashoffset = String(1 - Math.min(1, p / 0.9));
+    stage.dataset.active = String(active);
+  }
+  addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+  addEventListener('resize', update);
+  update();
+</script>
+
+<style>
+  /* ① Hero scene */
+  .scene { padding: 0; }
+  .hero-scene { position: relative; height: 100svh; min-height: 620px; overflow: hidden; display: flex; flex-direction: column;
+    background: radial-gradient(70% 60% at 72% 30%, #FBEFC9 0%, rgba(251,239,201,0) 70%), linear-gradient(180deg, #F8F2E3 0%, #F1F0E2 60%, #E6EDDD 100%); }
+  .sky { position: absolute; inset: 0; pointer-events: none; }
+  .sun { position: absolute; right: 12%; top: 4%; width: 340px; height: 340px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(247,201,72,.75) 0%, rgba(247,201,72,.35) 35%, rgba(247,201,72,0) 70%); }
+  .hero-wrap { position: relative; z-index: 2; flex: 1; display: flex; flex-direction: column; padding-top: 22px; min-height: 0; width: 100%; }
+  .hero-grid { flex: 1; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 24px; align-items: center; min-height: 0; padding-bottom: 72px; }
+  .hero-text { display: flex; flex-direction: column; gap: 16px; position: relative; z-index: 3; }
+  .hero-title { font-size: clamp(34px, 3.7vw, 54px); line-height: 1.04; letter-spacing: -.025em; }
+  .hero-text .lead { font-size: 18px; max-width: 560px; }
+  .ask-menu { margin-top: 6px; max-width: 540px; position: relative; }
+  .perch-mobile { display: none; position: absolute; right: 28px; top: 0; width: 40px; height: 2px; }
+  .hero-stage { position: relative; height: 100%; min-height: 0; align-self: stretch; }
+  .field { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
+  .field-veil { position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: linear-gradient(90deg, rgba(247,241,225,.94) 0%, rgba(247,241,225,.78) 34%, rgba(247,241,225,0) 58%); }
+  .hero-stage { position: relative; }
+  .scene-box { position: absolute; right: -2%; bottom: -70px; height: calc(100% + 70px); aspect-ratio: 9 / 8; max-width: 140%; }
+  .arch { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .scene-box .portrait { position: absolute; left: 40%; top: 23%; width: 40%; margin: 0; z-index: 1; }
+  .portrait { position: relative; width: min(400px, 78%); aspect-ratio: 1; border-radius: 50%; background: #fff; padding: 10px;
+    box-shadow: 0 2px 6px rgba(20,50,43,.08), 0 30px 60px rgba(20,50,43,.22); margin-top: -40px; }
+  .portrait img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+  .horizon { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 110px; z-index: 3; pointer-events: none; }
+  .dig { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 4; color: #EADFCB; font-weight: 600; font-size: 14px; text-decoration: none; letter-spacing: .04em; }
+  .dig span { display: inline-block; animation: dig 2s ease-in-out infinite; }
+  @keyframes dig { 50% { transform: translateY(4px); } }
+  @media (max-width: 900px) {
+    .hero-scene { height: auto; min-height: 100svh; max-height: none; }
+    .hero-grid { grid-template-columns: 1fr; padding-bottom: 96px; gap: 0; }
+    .hero-stage { position: relative; order: -1; height: 190px; }
+    .portrait { width: 176px; padding: 6px; margin-top: 8px; }
+      .arch { display: none; }
+    .scene-box { position: static; height: auto; aspect-ratio: auto; }
+    .scene-box .portrait { position: relative; left: auto; top: auto; width: 176px; margin: 8px auto 0; }
+    .field-veil { background: linear-gradient(180deg, rgba(247,241,225,.0) 0%, rgba(247,241,225,.7) 30%, rgba(247,241,225,.85) 60%, rgba(247,241,225,.3) 100%); }
+    .hero-text { padding-top: 4px; }
+    .hero-title { font-size: 32px; }
+    .perch-mobile { display: block; }
+    .ask-wrap { margin-top: 40px; }
+  }
+
+  /* ② Roots */
+  .roots { position: relative; height: 400vh; background: #2C221B; }
+  .roots-anchor { position: absolute; left: 0; width: 100%; height: 1px; pointer-events: none; }
+  .roots-stage { position: sticky; top: 0; height: 100svh; overflow: hidden; color: #F3EBDD;
+    background:
+      radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,.06) 50%, transparent 51%) 0 0 / 46px 46px,
+      radial-gradient(1.5px 1.5px at 60% 70%, rgba(0,0,0,.25) 50%, transparent 51%) 0 0 / 38px 38px,
+      linear-gradient(180deg, #5A4433 0%, #46352A 35%, #33271F 70%, #241B15 100%); }
+  .roots-grid { height: 100%; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 24px; align-items: center; position: relative; }
+  .roots-text { position: relative; height: min(640px, 86svh); }
+  .roots-perch { position: absolute; right: 8px; top: 0; width: 60px; height: 2px; }
+  .layer { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: 14px;
+    opacity: 0; transform: translateY(24px); transition: opacity .7s var(--ease), transform .7s var(--ease); pointer-events: none; }
+  .roots-stage[data-active='-1'] .layer-intro,
+  .roots-stage[data-active='0'] .layer[data-layer='0'],
+  .roots-stage[data-active='1'] .layer[data-layer='1'],
+  .roots-stage[data-active='2'] .layer[data-layer='2'] { opacity: 1; transform: none; pointer-events: auto; }
+  .layer h2 { font-size: clamp(34px, 3.6vw, 52px); color: #FFF8EA; }
+  .layer h2 span { color: #CDBFAB; font-style: italic; font-weight: 300; }
+  .eyebrow.light { color: #C9B48F; }
+  .soil-lead { font-size: 20px; line-height: 1.55; color: #E3D7C3; max-width: 520px; }
+  .badge-attorney.dark { background: rgba(141,179,139,.18); color: #BFE0BB; }
+  .root-cards { list-style: none; margin: 4px 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .root-cards li { background: rgba(255,248,234,.06); border: 1px solid rgba(255,248,234,.12); border-radius: 18px; padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 4px; backdrop-filter: blur(4px);
+    opacity: 0; transform: translateY(14px); transition: opacity .6s var(--ease), transform .6s var(--ease); transition-delay: calc(.15s + var(--i) * .09s); }
+  .roots-stage[data-active='0'] .layer[data-layer='0'] li, .roots-stage[data-active='1'] .layer[data-layer='1'] li, .roots-stage[data-active='2'] .layer[data-layer='2'] li { opacity: 1; transform: none; }
+  .root-cards b { font-size: 16px; color: #FFF8EA; }
+  .root-cards span { font-size: 14.5px; line-height: 1.45; color: #D9CCB7; }
+  .fine { font-size: 12px; color: #A8987F; }
+  .roots-svg { width: 100%; height: 100%; }
+  .root { fill: none; stroke: #C9A97E; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; opacity: .85; }
+  .root-tap { stroke-width: 8; stroke: #B48E62; }
+  .node { fill: #6B5444; stroke: #C9A97E; stroke-width: 2; opacity: 0; transition: fill .5s ease, opacity .5s ease; }
+  .node.on { opacity: 1; fill: #F0A04B; filter: drop-shadow(0 0 8px rgba(240,160,75,.8)); }
+  .node.gold.on { fill: #F5C542; filter: drop-shadow(0 0 8px rgba(245,197,66,.8)); }
+  .node.deep.on { fill: #8DB38B; filter: drop-shadow(0 0 8px rgba(141,179,139,.8)); }
+  .depth { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+  .depth li { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #8E7D66; writing-mode: vertical-rl; transition: color .4s ease; }
+  .roots-stage[data-active='0'] .depth [data-d='0'], .roots-stage[data-active='1'] .depth [data-d='1'], .roots-stage[data-active='2'] .depth [data-d='2'] { color: #F3EBDD; }
+  @media (max-width: 900px) {
+    .roots-grid { grid-template-columns: 1fr; }
+    .roots-svg { position: absolute; inset: 0; opacity: .35; }
+    .roots-text { height: 92svh; }
+    .root-cards { grid-template-columns: 1fr; gap: 8px; }
+    .root-cards li { padding: 10px 12px; }
+    .root-cards span { font-size: 13.5px; }
+    .depth { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { .root { stroke-dashoffset: 0 !important; } }
+
+  /* ④ Blocks */
+  .badge-attorney { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; padding: 6px 12px 6px 8px; border-radius: 999px;
+    background: rgba(255,255,255,.7); color: var(--leaf); font-size: 13px; font-weight: 700; letter-spacing: .04em; }
+  .badge-attorney::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
+  .story { display: flex; flex-direction: column; gap: 18px; }
+  .quote { font-family: var(--font-display); font-style: italic; font-weight: 300; font-size: clamp(36px, 4vw, 54px); line-height: 1.02; color: var(--leaf); }
+  .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; counter-reset: s; }
+  .steps li { counter-increment: s; background: var(--paper); border-radius: 999px; padding: 8px 14px 8px 8px; font-size: 15px; display: flex; gap: 8px; align-items: center; }
+  .steps li::before { content: counter(s); width: 26px; height: 26px; border-radius: 50%; background: var(--sage-2); display: grid; place-items: center; font-weight: 700; font-size: 13px; }
+  .death { display: flex; flex-direction: column; gap: 14px; min-height: 300px; }
+  .death h3 { font-size: 32px; }
+  .contact { display: grid; grid-template-columns: 1.2fr 1fr; gap: 32px; align-items: end; padding: 44px; }
+  .contact-facts { color: #C9D8CF; }
+  .contact-facts strong { color: #fff; margin-right: 8px; }
+  .on-dark { color: #fff; border-color: rgba(255,255,255,.7); }
+  .on-dark:hover { background: #fff; color: var(--ink); }
+  @media (max-width: 900px) { .contact { grid-template-columns: 1fr; padding: 26px 20px; } }
+</style>

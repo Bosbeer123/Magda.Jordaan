@@ -1,29 +1,19 @@
 ---
 import Base from '../layouts/Base.astro';
-import EstateCheck from '../components/EstateCheck';
-import { compliance } from '../config/site';
+import TopRow from '../components/TopRow.astro';
+import SunflowerTest from '../components/SunflowerTest';
+import { site, compliance } from '../config/site';
+const waNumber = site.whatsapp.startsWith('[') ? '' : site.whatsapp;
 ---
 <Base
-  title="Estate readiness check"
-  description="Eight yes-or-no questions. See in two minutes where your family would stand if you died today."
+  title="Plant your family's sunflower"
+  description="Ten plain questions grow your family's sunflower. Then see what happens if you pass away, can't work, or get a critical illness, and what keeps it standing."
 >
-  <div class="prose">
-    <h1>Estate readiness check</h1>
-    <p>Eight questions, two minutes. Your answers stay on this page until you ask for the report.</p>
-    <EstateCheck client:load />
-    <p class="muted small">{compliance.generalInfo}</p>
-  </div>
+  <section class="scene sf-scene snap" id="check" data-facts="sunflower">
+    <div class="wrap sf-wrap" data-parrot-stop="score" data-parrot-offset="0">
+      <TopRow current="/check" />
+      <SunflowerTest client:load whatsapp={waNumber} title="Plant your family’s sunflower. Then bring on the weather." />
+    </div>
+  </section>
+  <div class="wrap"><p class="muted small" style="padding:12px 0">{compliance.generalInfo} Your answers stay in your browser unless you ask for the email.</p></div>
 </Base>
-
-<style is:global>
-  .estate-check .questions { padding-left: 1.2em; }
-  .estate-check .questions li { margin-bottom: 18px; }
-  .estate-check .questions p { margin: 0 0 8px; }
-  .estate-check .choices { display: flex; gap: 8px; flex-wrap: wrap; }
-  .estate-check .choices button {
-    font: 600 1rem var(--font-ui); padding: 10px 18px; border-radius: var(--radius);
-    border: 2px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer;
-  }
-  .estate-check .choices button.chosen { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
-  .estate-check .card { margin: 24px 0; }
-</style>

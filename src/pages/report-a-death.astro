@@ -1,4 +1,6 @@
 ---
+import Fact from '../components/Fact.astro';
+import PageHead from '../components/PageHead.astro';
 import Base from '../layouts/Base.astro';
 import { site } from '../config/site';
 // Reproduces the Master of the High Court's published document list.
@@ -18,8 +20,9 @@ const docs = [
   description="A plain checklist of the documents the Master of the High Court needs to report a deceased estate in South Africa."
   legal
 >
-  <article class="prose">
-    <h1>Reporting a death: the documents you need</h1>
+  <PageHead title="Reporting a death: the documents you need" />
+  <section>
+    <div class="wrap prose">
     <p>
       An estate must be reported to the Master of the High Court within 14 days of the death. This is the list the
       Master's office works from. Print it, tick it off, and bring it all at once.
@@ -33,11 +36,12 @@ const docs = [
     <h2>Under or over R250 000?</h2>
     <p>
       Smaller estates (under R250 000) may be wound up with Letters of Authority, a simpler route. Larger estates need
-      an executor with Letters of Executorship. <span class="todo">[Magda: add the under-R250k variant list]</span>
+      an executor with Letters of Executorship. If the estate is worth R250&nbsp;000 or less, the Master can issue Letters of Authority instead, which is simpler and quicker. I&rsquo;ll tell you which applies.
     </p>
-    <p>If you'd like someone to carry this for you, phone me on {site.phone}.</p>
+    <p>If you'd like someone to carry this for you, phone me on <Fact value={site.phone} kind="phone" missing="Number" />.</p>
     <p class="muted small">Source: Master of the High Court, Department of Justice.</p>
-  </article>
+  </div>
+  </section>
 </Base>
 
 <style>

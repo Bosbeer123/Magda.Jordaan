@@ -1,3 +1,0 @@
-User-agent: *
-Allow: /
-Sitemap: https://magdajordaan.co.za/sitemap-index.xml
