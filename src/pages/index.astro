@@ -1,4 +1,5 @@
 ---
+import Perch from '../components/Perch.astro';
 import Base from '../layouts/Base.astro';
 import TopRow from '../components/TopRow.astro';
 import SunflowerTest from '../components/SunflowerTest';
@@ -10,67 +11,44 @@ import Fact from '../components/Fact.astro';
 
 const waNumber = site.whatsapp.startsWith('[') ? '' : site.whatsapp;
 
-// Hero scene (900 x 800 box): a tree on the right, Magda's portrait in the middle, and a bushy arch of sunflowers
-// that rises on the right, curves over the portrait and bends down and in towards the text, getting smaller and
-// wilting at the tip. Placed from a fixed seed, so it is random-looking but renders the same every time.
-let seed = 11;
+// Hero scene: the "garden border". Tall sunflowers stand straight up around Magda's portrait, some behind it and
+// some in front. Drawn in a 1200 x 620 garden (the mockup's coordinates) and scaled into the 900 x 800 scene box so the
+// portrait (centre 540,364 in the box) sits at the garden's centre (930,285). Fixed seed: same every time.
+let seed = 5;
 const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-type P = [number, number];
-const SPINE: P[] = [[884, 800], [884, 600], [866, 400], [824, 236], [744, 116], [622, 58], [492, 58], [382, 106], [304, 196], [266, 316], [266, 438], [292, 536], [336, 606]];
-const crPt = (p0: P, p1: P, p2: P, p3: P, t: number): P => {
-  const t2 = t * t, t3 = t2 * t;
-  return [0, 1].map((k) => 0.5 * (2 * p1[k] + (-p0[k] + p2[k]) * t + (2 * p0[k] - 5 * p1[k] + 4 * p2[k] - p3[k]) * t2 + (-p0[k] + 3 * p1[k] - 3 * p2[k] + p3[k]) * t3)) as P;
+const R = (n: number) => Math.round(n * 10) / 10;
+const GREENS = ['#3F7A33', '#4E8B3A', '#5E9C47', '#6DA850', '#7FAE66'];
+const GARDEN = `translate(${R(540 - 930 * 1.3)} ${R(364 - 285 * 1.3)}) scale(1.3)`;
+const flower = ([x, y, s]: number[]) => {
+  const lean = (rnd() - .5) * 14, top = y + s * .3;
+  return {
+    x, y, s, rot: Math.round((rnd() - .5) * 16), sx: R(0.86 + rnd() * 0.14), kind: rnd() < .5 ? 'sfSoft' : 'sfSoft2',
+    stem: `M${R(x + lean)} 640 C ${R(x + lean * .8)} ${R(top + (640 - top) * .6)}, ${R(x + lean * .1)} ${R(top + (640 - top) * .25)}, ${x} ${R(top)}`,
+    w: Math.max(3, s / 15),
+    leaves: [0, 1].map((j) => ({ x: x + (j ? 4 : -4), y: R(top + (620 - y) * (0.35 + j * 0.3)), rot: j ? -155 : -25, k: R(s / 62), c: GREENS[Math.floor(rnd() * GREENS.length)] })),
+    delay: R(-rnd() * 7), dur: R(7 + rnd() * 4),
+  };
 };
-const dense: P[] = [];
-for (let i = 0; i < SPINE.length - 1; i++) {
-  const p0 = SPINE[Math.max(0, i - 1)], p3 = SPINE[Math.min(SPINE.length - 1, i + 2)];
-  for (let j = 0; j < 24; j++) dense.push(crPt(p0, SPINE[i], SPINE[i + 1], p3, j / 24));
-}
-dense.push(SPINE[SPINE.length - 1]);
-const cum = [0];
-for (let i = 1; i < dense.length; i++) cum.push(cum[i - 1] + Math.hypot(dense[i][0] - dense[i - 1][0], dense[i][1] - dense[i - 1][1]));
-const LEN = cum[cum.length - 1];
-const CENTRE: P = [560, 400];
-const at = (u: number) => {
-  const d = Math.max(0, Math.min(1, u)) * LEN;
-  let i = cum.findIndex((c) => c >= d); if (i < 1) i = 1;
-  const f = (d - cum[i - 1]) / (cum[i] - cum[i - 1] || 1);
-  const x = dense[i - 1][0] + (dense[i][0] - dense[i - 1][0]) * f, y = dense[i - 1][1] + (dense[i][1] - dense[i - 1][1]) * f;
-  const tx = dense[i][0] - dense[i - 1][0], ty = dense[i][1] - dense[i - 1][1], tl = Math.hypot(tx, ty) || 1;
-  let nx = -ty / tl, ny = tx / tl;
-  if (nx * (x - CENTRE[0]) + ny * (y - CENTRE[1]) < 0) { nx = -nx; ny = -ny; }
-  return { x, y, nx, ny, ang: Math.atan2(ny, nx) * 180 / Math.PI };
-};
-const r1 = (n: number) => Math.round(n * 10) / 10;
-// the stalk, in tapering segments
-const stalk = [0, .2, .4, .6, .8].map((u0, k) => {
-  const pts = Array.from({ length: 21 }, (_, j) => at(u0 + (j / 20) * 0.2));
-  return { d: 'M' + pts.map((p) => `${r1(p.x)} ${r1(p.y)}`).join(' L'), w: 15 - k * 2.8 };
-});
-const GREENS = ['#3F7A33', '#4E8B3A', '#5E9C47', '#6DA850', '#7FAE66', '#477F37'];
-const leaves = Array.from({ length: 300 }, () => {
-  const u = Math.pow(rnd(), 0.8), p = at(u), off = (rnd() * 2 - 0.8) * 44 * (1 - u * 0.4);
-  return { x: r1(p.x + p.nx * off), y: r1(p.y + p.ny * off), rot: Math.round(p.ang + (rnd() * 200 - 100)), k: r1((1.15 - u * 0.45) * (0.6 + rnd() * 0.55) * 10) / 10, c: GREENS[Math.floor(rnd() * GREENS.length)] };
-});
-type Head = { x: number; y: number; sx: number; s: number; rot: number; kind: 'a' | 'b' | 'droop' | 'bud'; bx: number; by: number };
-const head = (u: number, scale: number, outBias: number): Head => {
-  const p = at(u), q = (u - 0.16) / 0.84;
-  const s = (112 - 66 * Math.pow(Math.max(0, q), 1.7)) * scale * (0.74 + rnd() * 0.5);
-  const off = (rnd() * 1.4 - 0.45 + outBias) * s * 0.5, slide = (rnd() - 0.5) * s * 0.5;
-  const tx = -p.ny, ty = p.nx;
-  const kind = q > 0.84 && rnd() < 0.7 ? 'droop' : rnd() < 0.12 ? 'bud' : rnd() < 0.5 ? 'a' : 'b';
-  return { x: r1(p.x + p.nx * off + tx * slide), y: r1(p.y + p.ny * off + ty * slide), sx: r1((0.72 + rnd() * 0.28) * 100) / 100, s: Math.round(kind === 'bud' ? s * 0.42 : s), rot: Math.round(p.ang + 90 + (rnd() - 0.5) * 40), kind, bx: r1(p.x), by: r1(p.y) };
-};
-const backHeads = Array.from({ length: 30 }, (_, i) => head(0.18 + 0.78 * (i + rnd() * 0.8) / 30, 0.75, 0.75));
-const frontHeads = Array.from({ length: 42 }, (_, i) => head(0.15 + 0.85 * (i + rnd() * 0.7) / 42, 1, 0));
-const tip = at(1);
-const fallen = Array.from({ length: 5 }, (_, i) => ({ x: r1(tip.x - 30 + rnd() * 90), y: r1(tip.y + 30 + i * 18 + rnd() * 14), rot: Math.round(rnd() * 360) }));
-// a low bush along the ground so there is no empty space under the portrait
-const bush = Array.from({ length: 46 }, () => {
-  const x = 320 + rnd() * 580, y = 700 + rnd() * 100;
-  return { x: r1(x), y: r1(y), rot: Math.round(-160 + rnd() * 140), k: r1((0.6 + rnd() * 0.5) * 10) / 10, c: GREENS[Math.floor(rnd() * GREENS.length)] };
-});
-const bushHeads = Array.from({ length: 7 }, (_, i) => ({ x: r1(350 + i * 80 + rnd() * 50), y: r1(690 + rnd() * 50), s: Math.round(34 + rnd() * 26), rot: Math.round(rnd() * 60 - 30), sx: r1((0.75 + rnd() * 0.25) * 100) / 100 }));
+const gardenBack = [[690, 175, 118], [930, 92, 96], [1095, 150, 128], [620, 380, 74], [1205, 410, 88]].map(flower);
+const gardenFront = [[760, 352, 104], [1100, 352, 112], [830, 470, 84], [1010, 455, 90], [1180, 505, 78], [690, 500, 70]].map(flower);
+
+// Underground life for the roots scene: a mossy, grassy top edge, moss clumps with little sprouts down the sides and
+// between the roots, pebbles, and a couple of tiny mushrooms. Kept away from the text column. Same seed every time.
+const MOSS = ['#5F7D3E', '#6F8F47', '#4D6934', '#7E9A4E', '#58763A'];
+const mossClump = (cx: number, cy: number, size: number) => Array.from({ length: 7 + Math.floor(rnd() * 5) }, () => ({
+  x: R(cx + (rnd() - .5) * size * 1.6), y: R(cy + (rnd() - .5) * size * .7), r: R(size * (0.22 + rnd() * 0.28)), c: MOSS[Math.floor(rnd() * MOSS.length)],
+}));
+const clumpSpots: [number, number, number][] = [
+  [30, 140, 46], [60, 330, 34], [20, 520, 52], [70, 720, 38], [26, 860, 44],
+  [1410, 120, 40], [1380, 300, 48], [1420, 480, 36], [1390, 660, 50], [1415, 840, 40],
+  [820, 230, 30], [1210, 190, 34], [770, 470, 26], [1250, 520, 30], [900, 760, 34], [1160, 820, 28], [1030, 380, 20],
+  [640, 880, 40], [300, 890, 34],
+];
+const clumps = clumpSpots.map(([x, y, s]) => ({ blobs: mossClump(x, y, s), x, y, s, depth: y / 900,
+  sprout: rnd() < .6 ? { h: R(s * (0.5 + rnd() * 0.5)), lean: R((rnd() - .5) * 14) } : null }));
+const grass = Array.from({ length: 150 }, (_, i) => { const x = R(i * 9.7 + rnd() * 6), h = R(10 + rnd() * 24); return { x, h, lean: R((rnd() - .5) * 10), c: MOSS[Math.floor(rnd() * MOSS.length)] }; });
+const pebbles = Array.from({ length: 26 }, () => { const side = rnd() < .5; return { x: R(side ? rnd() * 120 : 760 + rnd() * 680), y: R(80 + rnd() * 810), rx: R(3 + rnd() * 7), ry: R(2 + rnd() * 4), c: rnd() < .5 ? '#6B5A4A' : '#57483B' }; });
+const mushrooms = [[96, 812, 1], [1330, 760, .8], [1060, 868, .7]];
 
 
 const whatsapp = waNumber ? `https://wa.me/${waNumber}` : '/contact';
@@ -136,8 +114,8 @@ const layers = [
           <div class="scene-box">
             <svg class="arch" viewBox="0 0 900 800" aria-hidden="true">
               <defs>
+                <radialGradient id="heroSun"><stop offset="0" stop-color="#FFE7A3" stop-opacity=".9" /><stop offset=".55" stop-color="#FCEFC8" stop-opacity=".6" /><stop offset="1" stop-color="#FCEFC8" stop-opacity="0" /></radialGradient>
                 <linearGradient id="sp" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#EFA20A" /><stop offset="1" stop-color="#FFD24A" /></linearGradient>
-                <radialGradient id="canopy" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#9DBF84" /><stop offset="1" stop-color="#5E8D4E" /></radialGradient>
                 <symbol id="sfSoft" viewBox="-50 -50 100 100" overflow="visible">
                   {Array.from({ length: 16 }, (_, i) => <path d="M0 -16 C 9 -22, 10 -38, 0 -47 C -10 -38, -9 -22, 0 -16 Z" fill="url(#sp)" transform={`rotate(${i * 22.5})`} />)}
                   {Array.from({ length: 16 }, (_, i) => <path d="M0 -16 C 6 -21, 7 -31, 0 -38 C -7 -31, -6 -21, 0 -16 Z" fill="#F4B000" opacity=".55" transform={`rotate(${i * 22.5 + 11.25})`} />)}
@@ -151,69 +129,46 @@ const layers = [
                   {Array.from({ length: 20 }, (_, i) => <path d={`M0 -15 C 7 -21, 8 ${-36 - (i % 3) * 3}, 0 ${-46 - (i % 3) * 2} C -8 ${-36 - (i % 3) * 3}, -7 -21, 0 -15 Z`} fill={i % 2 ? '#F2A70E' : 'url(#sp)'} transform={`rotate(${i * 18 + (i % 4) * 2})`} />)}
                   <circle r="17" fill="#4C2F15" /><circle r="11" fill="#33200D" /><circle r="16" fill="none" stroke="#9A7029" stroke-width="2" stroke-dasharray="1.2 2.2" />
                 </symbol>
-                <symbol id="sfDroop" viewBox="-50 -50 100 100" overflow="visible">
-                  {Array.from({ length: 11 }, (_, i) => { const a = -100 + i * 20; return <path d="M0 -12 C 6 -18, 6 -30, 1 -40 C -5 -30, -6 -18, 0 -12 Z" fill={i % 3 ? '#D9951C' : '#B9781A'} transform={`rotate(${a + 180 + (i % 2) * 9})`} />; })}
-                  <circle r="15" fill="#5B3B1F" /><circle r="9" fill="#3B2512" />
-                </symbol>
-                <symbol id="sfBud" viewBox="-50 -50 100 100" overflow="visible">
-                  {Array.from({ length: 8 }, (_, i) => <path d="M0 -10 C 9 -16, 9 -30, 0 -40 C -9 -30, -9 -16, 0 -10 Z" fill="#6DA850" transform={`rotate(${i * 45})`} />)}
-                  {Array.from({ length: 8 }, (_, i) => <path d="M0 -8 C 5 -12, 5 -22, 0 -28 C -5 -22, -5 -12, 0 -8 Z" fill="#F4B000" transform={`rotate(${i * 45 + 22})`} />)}
-                  <circle r="14" fill="#4E8B3A" />
-                </symbol>
               </defs>
 
-              <!-- the tree, behind everything -->
-              <g class="tree" transform="translate(-60 0)">
-                <path d="M846 800 C 838 700, 852 560, 830 430 C 820 370, 826 330, 818 290" fill="none" stroke="#7A5C47" stroke-width="30" stroke-linecap="round" />
-                <path d="M838 800 C 832 700, 842 560, 824 430" fill="none" stroke="#8C6C55" stroke-width="8" stroke-linecap="round" opacity=".5" />
-                <path d="M822 330 C 790 280, 740 230, 650 196" fill="none" stroke="#7A5C47" stroke-width="13" stroke-linecap="round" />
-                <path d="M760 250 C 740 226, 720 214, 700 210" fill="none" stroke="#7A5C47" stroke-width="6" stroke-linecap="round" />
-                <g class="sway" style="animation-duration:11s">
-                  <circle cx="800" cy="170" r="120" fill="url(#canopy)" opacity=".9" />
-                  <circle cx="880" cy="230" r="96" fill="#6E9A5B" opacity=".85" />
-                  <circle cx="720" cy="130" r="80" fill="#88B070" opacity=".85" />
-                  <circle cx="860" cy="100" r="74" fill="#7FA866" opacity=".9" />
-                  <circle cx="760" cy="250" r="64" fill="#6A9457" opacity=".8" />
+              <circle cx="540" cy="360" r="350" fill="url(#heroSun)" />
+              <g transform={GARDEN}>
+                <!-- the parrot's branch: a carved, tapering limb off the tall flower on the right, with a mossy collar -->
+                <g class="hero-branch">
+                  <path d="M1097 266 C 1118 254, 1142 244, 1172 236 C 1176 235, 1177 238, 1173 239.5 C 1146 248, 1122 260, 1099 274 Z" fill="#7A5C47" />
+                  <path d="M1099 266.5 C 1120 255, 1142 245.5, 1170 237.5" stroke="#A3836A" stroke-width="1.1" fill="none" stroke-linecap="round" opacity=".8" />
+                  <path d="M1112 265 q 9 -5 16 -8 M1136 253 q 7 -3 12 -5" stroke="#5B4232" stroke-width=".8" fill="none" opacity=".7" />
+                  <path d="M1152 244 C 1156 236, 1162 230, 1170 227" stroke="#7A5C47" stroke-width="2.2" fill="none" stroke-linecap="round" />
+                  <use href="#sfLeafSoft" x="0" y="-20" width="60" height="40" transform="translate(1172 237) rotate(-18) scale(.4)" style="color:#5E9C47" />
+                  <use href="#sfLeafSoft" x="0" y="-20" width="60" height="40" transform="translate(1170 227) rotate(-62) scale(.3)" style="color:#7FAE66" />
+                  <use href="#sfLeafSoft" x="0" y="-20" width="60" height="40" transform="translate(1124 257) rotate(120) scale(.26)" style="color:#6DA850" />
+                  <circle cx="1098" cy="269" r="6" fill="#6F8F47" /><circle cx="1093" cy="273" r="4.5" fill="#5F7D3E" /><circle cx="1103" cy="273" r="4" fill="#7E9A4E" />
+                  <circle cx="1096" cy="266" r="1.8" fill="#A9C27A" opacity=".6" />
                 </g>
-                <path d="M690 200 C 680 186, 664 180, 650 182 C 658 196, 674 204, 690 200 Z" fill="#6DA850" />
-                <path d="M730 214 C 728 230, 718 240, 704 244 C 704 230, 714 218, 730 214 Z" fill="#5E9C47" />
-                <rect data-parrot-home x="672" y="198" width="44" height="2" fill="transparent" />
+                <rect data-parrot-home x="1120" y="252" width="28" height="2" fill="transparent" />
+                {gardenBack.map((f) => (
+                  <g class="sway" style={`animation-delay:${f.delay}s;animation-duration:${f.dur}s`} opacity=".94">
+                    <path d={f.stem} fill="none" stroke="#6E9C59" stroke-width={f.w} stroke-linecap="round" />
+                    {f.leaves.map((l) => <use href="#sfLeafSoft" x="0" y="-20" width="60" height="40" transform={`translate(${l.x} ${l.y}) rotate(${l.rot}) scale(${l.k})`} style={`color:${l.c}`} />)}
+                    <g transform={`translate(${f.x} ${f.y}) rotate(${f.rot}) scale(${f.sx} 1)`}><use href={`#${f.kind}`} x={-f.s / 2} y={-f.s / 2} width={f.s} height={f.s} /></g>
+                  </g>
+                ))}
               </g>
-
-              <!-- low bush on the ground -->
-              {bush.map((l) => <use href="#sfLeafSoft" x="0" y="-20" width="60" height="40" transform={`translate(${l.x} ${l.y}) rotate(${l.rot}) scale(${l.k})`} style={`color:${l.c}`} />)}
-              {bushHeads.map((h) => <g transform={`translate(${h.x} ${h.y}) rotate(${h.rot}) scale(${h.sx} 1)`}><use href="#sfSoft2" x={-h.s / 2} y={-h.s / 2} width={h.s} height={h.s} /></g>)}
-
-              <!-- back row of heads, peeping from behind the arch -->
-              {backHeads.map((f) => (
-                <g opacity=".82">
-                  <path d={`M${f.bx} ${f.by} Q ${(f.bx + f.x) / 2 + 8} ${(f.by + f.y) / 2 + 10} ${f.x} ${f.y}`} fill="none" stroke="#6E9C59" stroke-width={Math.max(2, f.s / 20)} stroke-linecap="round" />
-                  <g class="sway" style={`animation-delay:${-(f.x % 7)}s;animation-duration:${8 + (f.y % 4)}s`}>
-                    <g transform={`translate(${f.x} ${f.y}) rotate(${f.rot}) scale(${f.sx} 1)`}><use href={f.kind === 'b' ? '#sfSoft2' : f.kind === 'droop' ? '#sfDroop' : f.kind === 'bud' ? '#sfBud' : '#sfSoft'} x={-f.s / 2} y={-f.s / 2} width={f.s} height={f.s} /></g>
-                  </g>
-                </g>
-              ))}
-
-              <!-- the arching stalk -->
-              {stalk.map((sg) => <path d={sg.d} fill="none" stroke="#4E8B3A" stroke-width={sg.w} stroke-linecap="round" stroke-linejoin="round" />)}
-
-              <!-- leaves all along it -->
-              {leaves.map((l) => <use href="#sfLeafSoft" x="0" y="-20" width="60" height="40" transform={`translate(${l.x} ${l.y}) rotate(${l.rot}) scale(${l.k})`} style={`color:${l.c}`} />)}
-
-              <!-- front heads -->
-              {frontHeads.map((f) => (
-                <g>
-                  <path d={`M${f.bx} ${f.by} Q ${(f.bx + f.x) / 2 - 6} ${(f.by + f.y) / 2 + 8} ${f.x} ${f.y}`} fill="none" stroke="#4E8B3A" stroke-width={Math.max(2.5, f.s / 16)} stroke-linecap="round" />
-                  <g class="sway" style={`animation-delay:${-(f.x % 9)}s;animation-duration:${7 + (f.y % 5)}s`}>
-                    <g transform={`translate(${f.x} ${f.y}) rotate(${f.rot}) scale(${f.sx} 1)`}><use href={f.kind === 'b' ? '#sfSoft2' : f.kind === 'droop' ? '#sfDroop' : f.kind === 'bud' ? '#sfBud' : '#sfSoft'} x={-f.s / 2} y={-f.s / 2} width={f.s} height={f.s} /></g>
-                  </g>
-                </g>
-              ))}
-              {fallen.map((p) => <path d="M0 0 C 4 -4, 4 -12, 0 -16 C -4 -12, -4 -4, 0 0 Z" fill="#D9951C" opacity=".75" transform={`translate(${p.x} ${p.y}) rotate(${p.rot})`} />)}
             </svg>
             <div class="portrait">
               <img src="/magda.webp" alt="Magda Jordaan" width="800" height="800" fetchpriority="high" />
             </div>
+            <svg class="arch arch-front" viewBox="0 0 900 800" aria-hidden="true">
+              <g transform={GARDEN}>
+                {gardenFront.map((f) => (
+                  <g class="sway" style={`animation-delay:${f.delay}s;animation-duration:${f.dur}s`}>
+                    <path d={f.stem} fill="none" stroke="#4E8B3A" stroke-width={f.w} stroke-linecap="round" />
+                    {f.leaves.map((l) => <use href="#sfLeafSoft" x="0" y="-20" width="60" height="40" transform={`translate(${l.x} ${l.y}) rotate(${l.rot}) scale(${l.k})`} style={`color:${l.c}`} />)}
+                    <g transform={`translate(${f.x} ${f.y}) rotate(${f.rot}) scale(${f.sx} 1)`}><use href={`#${f.kind}`} x={-f.s / 2} y={-f.s / 2} width={f.s} height={f.s} /></g>
+                  </g>
+                ))}
+              </g>
+            </svg>
           </div>
         </div>
       </div>
@@ -232,6 +187,32 @@ const layers = [
       <div class="roots-anchor" style={`top:calc(300vh * ${0.2 + i * 0.28})`} data-parrot-stop={l.id} data-parrot-perch-on="#roots-perch" data-parrot-offset="0"></div>
     ))}
     <div class="roots-stage" data-active="-1">
+      <svg class="soil-life" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <!-- topsoil: a mossy lip with grass growing up into the light -->
+        <path d="M0 0 H 1440 V 34 C 1300 46, 1180 30, 1040 42 C 900 54, 760 36, 620 46 C 470 56, 330 38, 200 48 C 120 54, 60 44, 0 50 Z" fill="#4D6934" />
+        <path d="M0 0 H 1440 V 20 C 1260 30, 1100 18, 940 28 C 780 38, 600 22, 430 32 C 280 40, 140 26, 0 34 Z" fill="#6F8F47" />
+        {grass.map((g) => <path d={`M${g.x} 30 q ${g.lean} ${-g.h * .6} ${g.lean * 1.4} ${-g.h}`} stroke={g.c} stroke-width="2.2" fill="none" stroke-linecap="round" />)}
+        {grass.filter((_, i) => i % 3 === 0).map((g) => <path d={`M${g.x} 40 q ${-g.lean * .5} ${g.h * .5} ${g.lean * .3} ${g.h * .9}`} stroke="#8C7A5E" stroke-width="1" fill="none" opacity=".5" />)}
+        {pebbles.map((p) => <ellipse cx={p.x} cy={p.y} rx={p.rx} ry={p.ry} fill={p.c} opacity=".8" />)}
+        {clumps.map((c) => (
+          <g opacity={(0.95 - c.depth * 0.35).toFixed(2)}>
+            {c.blobs.map((b) => <circle cx={b.x} cy={b.y} r={b.r} fill={b.c} />)}
+            {c.blobs.slice(0, 4).map((b) => <circle cx={R(b.x - b.r * .3)} cy={R(b.y - b.r * .35)} r={R(b.r * .35)} fill="#9BB565" opacity=".35" />)}
+            {c.sprout && <g stroke="#86A856" stroke-width="2" fill="none" stroke-linecap="round">
+              <path d={`M${c.x} ${c.y - c.s * .2} q ${c.sprout.lean} ${-c.sprout.h * .6} 0 ${-c.sprout.h}`} />
+              <path d={`M${c.x + c.sprout.lean * .4} ${c.y - c.s * .2 - c.sprout.h * .7} q 8 -6 14 -2 q -6 6 -14 2 Z`} fill="#86A856" />
+              <path d={`M${c.x + c.sprout.lean * .3} ${c.y - c.s * .2 - c.sprout.h * .5} q -8 -6 -13 -1 q 6 5 13 1 Z`} fill="#7E9A4E" />
+            </g>}
+          </g>
+        ))}
+        {mushrooms.map(([x, y, k]) => (
+          <g transform={`translate(${x} ${y}) scale(${k})`} opacity=".9">
+            <path d="M-3 0 C -3 -8, -2 -14, 0 -16 C 2 -14, 3 -8, 3 0 Z" fill="#E8DCC5" />
+            <path d="M-12 -14 C -10 -24, 10 -24, 12 -14 Z" fill="#B5643F" />
+            <circle cx="-4" cy="-18" r="1.6" fill="#F3E6CF" /><circle cx="4" cy="-19" r="1.2" fill="#F3E6CF" />
+          </g>
+        ))}
+      </svg>
       <div class="wrap roots-grid">
         <div class="roots-text">
           <span id="roots-perch" class="roots-perch" aria-hidden="true"></span>
@@ -290,7 +271,8 @@ const layers = [
   <!-- ④ Calm blocks -->
   <section>
     <div class="wrap bento">
-      <div class="block span-7 reveal story">
+      <div class="block span-7 reveal story has-nook">
+        <Perch kind="sunflower" side="right" />
         <p class="quote">&ldquo;Awareness before desire.&rdquo;</p>
         <p style="color:var(--ink-2)">
           I started in underwriting, in senior roles at Liberty and Momentum. Then I qualified as an attorney and spent
@@ -303,7 +285,8 @@ const layers = [
           <li><b>Adviser</b> <span class="momentum">Momentum Consult</span> Castle Gate</li>
         </ol>
       </div>
-      <a class="block block-ink span-5 reveal death lift" style="--d:.1s" href="/report-a-death" data-parrot-stop="death" data-facts="death">
+      <a class="block block-ink span-5 reveal death lift has-nook" style="--d:.1s" href="/report-a-death" data-parrot-stop="death" data-facts="death">
+        <Perch kind="vine" side="right" dark />
         <p class="eyebrow" style="color:var(--moss)">If someone has just died</p>
         <h3>Breathe. Here is what to do first, in order.</h3>
         <p style="color:#C9D8CF">The estate must be reported to the Master within 14 days. The checklist shows every document. Or phone me, and I&rsquo;ll carry it.</p>
@@ -412,6 +395,7 @@ const layers = [
   .hero-stage { position: relative; }
   .scene-box { position: absolute; right: -2%; bottom: -70px; height: calc(100% + 70px); aspect-ratio: 9 / 8; max-width: 140%; }
   .arch { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .arch-front { z-index: 2; pointer-events: none; }
   .scene-box .portrait { position: absolute; left: 40%; top: 23%; width: 40%; margin: 0; z-index: 1; }
   .portrait { position: relative; width: min(400px, 78%); aspect-ratio: 1; border-radius: 50%; background: #fff; padding: 10px;
     box-shadow: 0 2px 6px rgba(20,50,43,.08), 0 30px 60px rgba(20,50,43,.22); margin-top: -40px; }
@@ -443,7 +427,8 @@ const layers = [
       radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,.06) 50%, transparent 51%) 0 0 / 46px 46px,
       radial-gradient(1.5px 1.5px at 60% 70%, rgba(0,0,0,.25) 50%, transparent 51%) 0 0 / 38px 38px,
       linear-gradient(180deg, #5A4433 0%, #46352A 35%, #33271F 70%, #241B15 100%); }
-  .roots-grid { height: 100%; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 24px; align-items: center; position: relative; }
+  .soil-life { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+  .roots-grid { z-index: 1; height: 100%; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 24px; align-items: center; position: relative; }
   .roots-text { position: relative; height: min(640px, 86svh); }
   .roots-perch { position: absolute; right: 8px; top: 0; width: 60px; height: 2px; }
   .layer { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: 14px;

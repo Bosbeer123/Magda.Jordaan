@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import '../styles/parrot.css';
+import ParrotArt, { type ParrotPalette } from './ParrotArt';
 
 /*
-  The parrot guide (a Cape parrot: green, with the red forehead).
+  The parrot guide (scarlet macaw colours; see ParrotArt.tsx for the others).
   - On the home page it perches on the branch in the hero ([data-parrot-home]) and asks what you'd like to know.
   - Pick a topic: it says a line, flies to that block ([data-parrot-stop="<id>"]), perches on it and lights it up.
   - When its block scrolls away it flies to the corner; tap it any time to ask again.
@@ -29,64 +30,14 @@ const TOPICS: Topic[] = [
 ];
 
 
+/** Parrot colours: 'green' (Cape parrot), 'red' (red with green wings) or 'scarlet' (macaw). */
+const PARROT_PALETTE: ParrotPalette = 'scarlet';
+
 const W = 92;            // parrot size (px), the same everywhere
 const H = Math.round(W * 1.12);
 
 function Parrot({ flying }: { flying: boolean }) {
-  // A Cape parrot, standing upright on a branch, facing right. One silhouette for head and body,
-  // olive-silver head blending into green, red forehead and wing bend, big pale hooked beak, grey feet.
-  return (
-    <svg className={`pg-bird ${flying ? 'is-flying' : ''}`} viewBox="0 0 200 224" width={W} height={H} aria-hidden="true">
-      <defs>
-        <linearGradient id="pgB" x1=".3" y1="0" x2=".7" y2="1"><stop offset="0" stopColor="#7DBE55" /><stop offset=".5" stopColor="#4F983F" /><stop offset="1" stopColor="#2C6A31" /></linearGradient>
-        <radialGradient id="pgBh" cx="70%" cy="45%" r="45%"><stop offset="0" stopColor="#A6D97B" stopOpacity=".55" /><stop offset="1" stopColor="#A6D97B" stopOpacity="0" /></radialGradient>
-        <linearGradient id="pgH" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#CFC3A2" /><stop offset=".6" stopColor="#A3926F" /><stop offset="1" stopColor="#8E9A62" stopOpacity="0" /></linearGradient>
-        <linearGradient id="pgW" x1=".2" y1="0" x2=".6" y2="1"><stop offset="0" stopColor="#4F9840" /><stop offset=".6" stopColor="#2D6C35" /><stop offset="1" stopColor="#1C5254" /></linearGradient>
-        <linearGradient id="pgK" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#F6EFE0" /><stop offset=".6" stopColor="#DCCAA9" /><stop offset="1" stopColor="#B49C77" /></linearGradient>
-        <linearGradient id="pgT" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#2C6A31" /><stop offset="1" stopColor="#1A4B4D" /></linearGradient>
-        <linearGradient id="pgR" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#F2603C" /><stop offset="1" stopColor="#C21F35" /></linearGradient>
-      </defs>
-      <g className="pg-tail">
-        <path d="M104 178 C 92 196, 80 210, 66 224 L 80 224 C 92 212, 104 198, 114 184 Z" fill="url(#pgT)" />
-        <path d="M110 180 C 102 198, 94 212, 86 224 L 96 224 C 104 212, 112 198, 118 186 Z" fill="#225846" />
-      </g>
-      <g className="pg-wing-back"><path d="M110 92 C 84 62, 48 54, 18 68 C 44 74, 72 90, 98 120 Z" fill="url(#pgW)" /></g>
-      <g className="pg-body">
-        <path d="M130 22 C 146 22, 158 32, 160 46 C 162 58, 158 66, 160 80 C 164 104, 158 132, 146 156 C 136 174, 122 188, 108 188 C 94 186, 86 170, 84 148 C 82 122, 90 100, 100 84 C 106 72, 104 56, 108 42 C 112 30, 120 22, 130 22 Z" fill="url(#pgB)" />
-        <path d="M130 22 C 146 22, 158 32, 160 46 C 162 58, 158 66, 160 80 C 164 104, 158 132, 146 156 C 136 174, 122 188, 108 188 C 94 186, 86 170, 84 148 C 82 122, 90 100, 100 84 C 106 72, 104 56, 108 42 C 112 30, 120 22, 130 22 Z" fill="url(#pgBh)" />
-        <g fill="none" stroke="#B9E293" strokeWidth="1.3" strokeLinecap="round" opacity=".4">
-          <path d="M138 104 q5 3 10 0" /><path d="M134 118 q5 3 10 0" /><path d="M142 126 q5 3 9 0" /><path d="M132 134 q5 3 10 0" /><path d="M138 146 q5 3 9 0" /><path d="M126 156 q5 3 10 0" />
-        </g>
-        <path d="M112 182 C 116 174, 128 172, 132 180 C 126 186, 118 188, 112 182 Z" fill="url(#pgR)" opacity=".9" />
-      </g>
-      <g className="pg-head">
-        <path d="M130 22 C 146 22, 158 32, 160 46 C 162 58, 158 70, 150 78 C 136 86, 116 84, 106 74 C 104 62, 104 50, 108 40 C 112 30, 120 22, 130 22 Z" fill="url(#pgH)" />
-        <path d="M134 23 C 145 22, 155 28, 159 38 C 151 36, 142 34, 134 35 C 131 31, 131 26, 134 23 Z" fill="url(#pgR)" />
-        <g fill="none" stroke="#EFE8D4" strokeWidth="1" strokeLinecap="round" opacity=".45"><path d="M114 46 q6 -3 12 0" /><path d="M112 58 q6 -3 12 0" /><path d="M118 68 q6 -3 12 0" /></g>
-        <g className="pg-eye">
-          <circle cx="140" cy="44" r="7.6" fill="#ECE6D9" />
-          <circle cx="140.8" cy="44" r="4.8" fill="#4A2C17" />
-          <circle cx="140.8" cy="44" r="2.7" fill="#120A05" />
-          <circle cx="142.4" cy="42.4" r="1.4" fill="#fff" />
-        </g>
-        <path d="M155 34 C 170 32, 183 43, 183 59 C 183 69, 178 75, 172 74 C 172 66, 168 60, 160 58 C 155 53, 153 44, 155 34 Z" fill="url(#pgK)" stroke="#A88F69" strokeWidth=".8" />
-        <path d="M160 58 C 168 60, 172 66, 172 74 C 165 74, 160 70, 158 64 Z" fill="#BCA47C" />
-        <circle cx="158.5" cy="38.5" r="1.3" fill="#8C7656" />
-      </g>
-      <g className="pg-wing">
-        <path d="M112 84 C 126 88, 134 106, 132 130 C 130 154, 118 178, 100 208 C 92 192, 88 170, 88 148 C 88 118, 96 94, 112 84 Z" fill="url(#pgW)" />
-        <path d="M112 84 C 122 86, 130 94, 132 106 C 124 102, 116 98, 106 98 Z" fill="url(#pgR)" />
-        <g fill="none" stroke="#1F5A3A" strokeWidth="1.5" strokeLinecap="round" opacity=".7">
-          <path d="M104 118 q10 2 18 -4" /><path d="M98 132 q11 2 20 -4" /><path d="M95 146 q11 2 20 -5" />
-          <path d="M96 160 C 95 176, 96 190, 100 204" /><path d="M104 158 C 103 172, 103 184, 104 196" /><path d="M112 154 C 111 166, 110 176, 108 186" />
-        </g>
-      </g>
-      <g className="pg-feet" stroke="#8E8C86" strokeWidth="4.2" strokeLinecap="round" fill="none">
-        <path d="M114 186 L 114 204 M114 204 l -10 4 M114 204 l 10 4 M114 204 l -2 -3" />
-        <path d="M128 184 L 128 203 M128 203 l -10 4 M128 203 l 10 4" />
-      </g>
-    </svg>
-  );
+  return <ParrotArt flying={flying} palette={PARROT_PALETTE} width={W} />;
 }
 
 function TopicIcon({ id }: { id: string }) {
@@ -186,7 +137,9 @@ export default function ParrotGuide() {
 
   const ctxFor = (el: Element | null) => el?.closest('[data-facts]')?.getAttribute('data-facts') ?? PAGE_CONTEXT[location.pathname.replace(/\.html$/, '')] ?? 'home';
   const spotOn = (el: Element, fx: number) => { const r = el.getBoundingClientRect(); return { x: r.left + r.width * fx - W / 2, y: r.top - H + 8, r }; };
-  const visible = (r: DOMRect) => r.top > 70 && r.top < innerHeight - 150 && r.width > 120 && r.left > -20 && r.right < innerWidth + 20;
+  // A perch spot ([data-parrot-perch], on a branch drawn on a box) is small; a block is usable when it's wide enough.
+  const isSpot = (el: Element | null | undefined) => !!el?.matches('[data-parrot-perch]');
+  const visible = (r: DOMRect, el?: Element | null) => r.top > 70 && r.top < innerHeight - 150 && (isSpot(el) || r.width > 120) && r.left > -20 && r.right < innerWidth + 20;
   // Somewhere to fly to: open space, never over words. During the sunflower activity, only over the sunflower side.
   const randomSky = () => {
     const act = document.querySelector('.sf-scene');
@@ -217,8 +170,11 @@ export default function ParrotGuide() {
   }
 
   function pickPerch(): { el: Element; fx: number } | null {
-    const els = Array.from(document.querySelectorAll(PERCHABLE)).filter((e) => visible(e.getBoundingClientRect()));
-    if (!els.length) return null;
+    // Prefer a branch when one is on screen; otherwise any box.
+    const spots = Array.from(document.querySelectorAll('[data-parrot-perch]')).filter((e) => visible(e.getBoundingClientRect(), e));
+    if (spots.length && Math.random() < 0.75) return { el: spots[Math.floor(Math.random() * spots.length)], fx: 0.5 };
+    const els = Array.from(document.querySelectorAll(PERCHABLE)).filter((e) => visible(e.getBoundingClientRect()) && !e.querySelector(':scope > .nook'));
+    if (!els.length) return spots.length ? { el: spots[0], fx: 0.5 } : null;
     return { el: els[Math.floor(Math.random() * els.length)], fx: 0.2 + Math.random() * 0.6 };
   }
 
@@ -249,7 +205,7 @@ export default function ParrotGuide() {
       if (!reduced.current) {
         if (mode.current === 'perched' && perch.current) {
           const sp = spotOn(perch.current.el, perch.current.fx);
-          if (!visible(sp.r) && !perch.current.el.matches('[data-parrot-home]')) takeOff();
+          if (!visible(sp.r, perch.current.el) && !perch.current.el.matches('[data-parrot-home]')) takeOff();
           else if (perch.current.el.matches('[data-parrot-home]') && (sp.r.top < -40 || sp.r.top > innerHeight)) takeOff();
           else { pos.current = { x: sp.x, y: sp.y }; vel.current = { x: 0, y: 0 }; }
           if (now > timer.current && mode.current === 'perched' && !bubbleRef.current?.matches(':hover')) takeOff();
@@ -276,8 +232,9 @@ export default function ParrotGuide() {
             const l = landOn.current; landOn.current = null;
             perch.current = { el: l.el, fx: l.fx }; mode.current = 'perched'; setFlying(false);
             timer.current = now + 9000 + Math.random() * 4000;
-            facing.current = l.fx > 0.5 ? -1 : 1;
-            l.el.classList.add('parrot-glow'); setTimeout(() => l.el.classList.remove('parrot-glow'), 2600);
+            facing.current = isSpot(l.el) ? Number((l.el as HTMLElement).dataset.face ?? -1) : l.fx > 0.5 ? -1 : 1;
+            const glow = isSpot(l.el) ? l.el.closest(PERCHABLE) ?? l.el.parentElement! : l.el;
+            glow.classList.add('parrot-glow'); setTimeout(() => glow.classList.remove('parrot-glow'), 2600);
             l.then?.();
           }
         }
@@ -291,17 +248,49 @@ export default function ParrotGuide() {
     return () => { cancelAnimationFrame(raf); clearTimeout(bubbleTimer.current); };
   }, []);
 
+  // The speech bubble goes beside the parrot, wherever it covers the least text on the page.
+  // Candidate spots are scored every ~150ms (or when the bubble changes size); in between it simply follows the bird.
+  const bubbleSpot = useRef({ t: 0, w: 0, h: 0, dx: 0, dy: 0, side: 'right' });
+  const TEXTY = 'p, h1, h2, h3, h4, li, label, input, select, textarea, button, a, img, .btn, .ask-menu';
+  function textHits(x: number, y: number, w: number, h: number) {
+    let n = 0;
+    for (let i = 0; i < 5; i++) for (let j = 0; j < 4; j++) {
+      const px = x + (w * (i + 0.5)) / 5, py = y + (h * (j + 0.5)) / 4;
+      if (px < 4 || py < 4 || px > innerWidth - 4 || py > innerHeight - 4) { n += 3; continue; }
+      const under = document.elementsFromPoint(px, py).find((e) => !e.closest('.pg, .pg-bubble'));
+      if (under && under.closest(TEXTY) && !under.closest('svg')) n++;
+    }
+    return n;
+  }
   function placeBubble() {
     const bub = bubbleRef.current; if (!bub) return;
     const bw = bub.offsetWidth, bh = bub.offsetHeight, p = pos.current;
-    const right = p.x + W / 2 < innerWidth / 2;
-    let x = right ? p.x + W * 0.8 : p.x - bw + W * 0.2;
-    let y = p.y - bh + 10;
-    if (innerWidth < 640) { x = 12; y = p.y > innerHeight / 2 ? p.y - bh - 4 : p.y + H + 6; }
+    const spot = bubbleSpot.current, now = performance.now();
+    if (now - spot.t > 150 || Math.abs(spot.w - bw) > 2 || Math.abs(spot.h - bh) > 2) {
+      const g = 8;
+      const cands = [
+        { dx: W * 0.8, dy: -bh + 10, side: 'right' },          // up and right
+        { dx: -bw + W * 0.2, dy: -bh + 10, side: 'left' },     // up and left
+        { dx: W + g, dy: (H - bh) / 2, side: 'right' },        // beside, right
+        { dx: -bw - g, dy: (H - bh) / 2, side: 'left' },       // beside, left
+        { dx: W * 0.8, dy: H - 6, side: 'right' },             // down and right
+        { dx: -bw + W * 0.2, dy: H - 6, side: 'left' },        // down and left
+        { dx: (W - bw) / 2, dy: -bh - g, side: 'right' },      // straight above
+      ];
+      let best = cands[0], bestN = Infinity;
+      if (bub.querySelector('.pg-hello') || bw === 0) { best = p.x + W / 2 < innerWidth / 2 ? cands[0] : cands[1]; }
+      else for (const c of cands) {
+        const n = textHits(p.x + c.dx, p.y + c.dy, bw, bh);
+        if (n < bestN) { best = c; bestN = n; }
+        if (n === 0) break;
+      }
+      Object.assign(spot, { t: now, w: bw, h: bh, dx: best.dx, dy: best.dy, side: best.side });
+    }
+    let x = p.x + spot.dx, y = p.y + spot.dy;
     x = Math.max(12, Math.min(innerWidth - bw - 12, x));
     y = Math.max(12, Math.min(innerHeight - bh - 12, y));
     bub.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-    bub.dataset.side = right ? 'right' : 'left';
+    bub.dataset.side = spot.side;
   }
 
   function choose(t: Topic) {
@@ -309,10 +298,11 @@ export default function ParrotGuide() {
     if (!el) { location.href = t.href; return; }
     setBubble(null);
     const sel = el.getAttribute('data-parrot-perch-on');
-    const perchEl = (sel && document.querySelector(sel)) || el;
+    const spot = el.querySelector(':scope > .nook [data-parrot-perch]');
+    const perchEl = (sel && document.querySelector(sel)) || spot || el;
     const off = el.hasAttribute('data-parrot-offset') ? Number(el.getAttribute('data-parrot-offset')) : Math.max(120, innerHeight * 0.22);
     scrollTo({ top: scrollY + el.getBoundingClientRect().top - off, behavior: reduced.current ? 'auto' : 'smooth' });
-    setTimeout(() => flyToPerch({ el: perchEl, fx: 0.75 }, () => say('topic', t.say, t, 11000)), reduced.current ? 0 : 700);
+    setTimeout(() => flyToPerch({ el: perchEl, fx: spot && perchEl === spot ? 0.5 : 0.75 }, () => say('topic', t.say, t, 11000)), reduced.current ? 0 : 700);
   }
 
   function onBird() {

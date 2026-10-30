@@ -187,3 +187,25 @@ input[type='text'], input[type='email'], input[type='tel'], textarea {
 
 /* A fact still to be added (see components/Fact.astro) */
 .tbc { display: inline-block; padding: 0 8px; border: 1px dashed currentColor; border-radius: 999px; font-size: .85em; line-height: 1.6; opacity: .7; white-space: nowrap; }
+
+/* Garden nooks: a bed, branch and arrangement built into a box's top corner, where the parrot lands (components/Perch.astro).
+   The box becomes a normal block so its text flows around the nook. */
+.has-nook { display: block !important; overflow: hidden; }
+.has-nook > * + * { margin-top: 16px; }
+.has-nook > .nook + * { margin-top: 0; }
+.has-nook > span { display: inline-block; }
+.nook { --pt: 36px; --ps: 36px; position: relative; width: 190px; pointer-events: none; }
+.card > .nook, .card-dark > .nook { --pt: 28px; --ps: 28px; }
+.nook-right { float: right; margin: calc(-1 * var(--pt)) calc(-1 * var(--ps)) 10px 18px; }
+.nook-left { float: left; margin: calc(-1 * var(--pt)) 18px 10px calc(-1 * var(--ps)); }
+.nook svg { display: block; width: 100%; height: auto; overflow: visible; }
+.nook svg.flip { transform: scaleX(-1); }
+.nook-bed { fill: #E3ECDF; }
+.nook-rim { fill: none; stroke: rgba(47,107,79,.16); stroke-width: 1.5; }
+.nook-dark .nook-bed { fill: rgba(141,179,139,.13); }
+.nook-dark .nook-rim { stroke: rgba(141,179,139,.24); }
+.perch-spot { position: absolute; width: 40px; height: 2px; transform: translateX(-50%); }
+@media (max-width: 640px) {
+  .block > .nook { --pt: 24px; --ps: 20px; }
+  .nook { width: 150px; }
+}

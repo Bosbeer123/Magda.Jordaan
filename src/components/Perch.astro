@@ -1,0 +1,75 @@
+---
+// A garden nook built into the top corner of a box: a soft bay in the corner with a mossy bank, a carved branch
+// growing in from the box's edge, and a small arrangement (sunflower, twig or hanging vine). The parrot lands on the
+// branch. Put it as the FIRST child of a box with the `has-nook` class; the box's text flows around it.
+// Use a few per site and mix the kinds: 'sunflower' (the main one), 'twig', 'vine'.
+interface Props { kind?: 'sunflower' | 'twig' | 'vine'; side?: 'left' | 'right'; dark?: boolean }
+const { kind = 'sunflower', side = 'right', dark = false } = Astro.props;
+// where the parrot stands: on the branch's top edge, in the drawing's 200 x 190 box
+const STAND = { x: 112, y: 112.4 };
+const left = side === 'right' ? (STAND.x / 200) * 100 : 100 - (STAND.x / 200) * 100;
+let seed = { sunflower: 3, twig: 7, vine: 11 }[kind];
+const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const MOSS = ['#5F7D3E', '#6F8F47', '#7E9A4E', '#58763A', '#86A856'];
+const moss = Array.from({ length: 16 }, (_, i) => ({ x: 78 + i * 8 + rnd() * 6, y: 176 + rnd() * 10 - Math.sin(i / 15 * Math.PI) * 10, r: 7 + rnd() * 8, c: MOSS[Math.floor(rnd() * MOSS.length)] }));
+const specks = Array.from({ length: 7 }, () => ({ x: 90 + rnd() * 105, y: 166 + rnd() * 14 }));
+---
+<div class={`nook nook-${side} ${dark ? 'nook-dark' : ''}`} aria-hidden="true">
+  <svg viewBox="0 0 200 190" class={side === 'left' ? 'flip' : ''}>
+    <!-- the bay: a soft garden bed tucked into the corner -->
+    <path class="nook-bed" d="M34 0 H 200 V 190 H 112 C 66 190, 30 160, 24 112 C 19 72, 22 32, 34 0 Z" />
+    <path class="nook-rim" d="M34 0 C 22 32, 19 72, 24 112 C 30 160, 66 190, 112 190" />
+
+    <!-- foliage hanging in from the top edge -->
+    <use href="#pcLeaf" x="0" y="-20" width="60" height="40" transform="translate(196 6) rotate(150) scale(.95)" style="color:#5E9C47" />
+    <use href="#pcLeaf" x="0" y="-20" width="60" height="40" transform="translate(178 2) rotate(118) scale(.7)" style="color:#7FAE66" />
+
+    {kind === 'vine' && <g class="sway" style="animation-duration:9s">
+      {[[140, 54, 0], [160, 78, 1], [186, 64, 2], [118, 40, 1]].map(([x, len, i]) => <>
+        <path d={`M${x} 0 C ${x + 6} ${len * .35}, ${x - 6} ${len * .7}, ${x + 2} ${len}`} stroke="#5E9C47" stroke-width="1.8" fill="none" stroke-linecap="round" />
+        {[.45, .8].map((t, j) => <use href="#pcLeaf" x="0" y="-20" width="60" height="40" transform={`translate(${x + (j ? 2 : -2)} ${len * t}) rotate(${j ? 60 : 120}) scale(.26)`} style={`color:${MOSS[(i + j) % 5]}`} />)}
+      </>)}
+    </g>}
+
+    {kind === 'sunflower' && <>
+      <!-- a sunflower growing up from the moss, and a bud -->
+      <path d="M170 182 C 168 150, 172 110, 166 72" stroke="#4E8B3A" stroke-width="4" fill="none" stroke-linecap="round" />
+      <use href="#pcLeaf" x="0" y="-20" width="60" height="40" transform="translate(169 146) rotate(-20) scale(.5)" style="color:#5E9C47" />
+      <path d="M188 184 C 188 166, 190 150, 186 136" stroke="#5E9C47" stroke-width="2.5" fill="none" stroke-linecap="round" />
+      <g class="sway" style="animation-duration:8s"><use href="#pcSun" x="140" y="44" width="54" height="54" /></g>
+      <use href="#pcBud" x="176" y="124" width="22" height="22" />
+    </>}
+
+    {kind === 'twig' && <>
+      <!-- small flowers in the moss -->
+      <path d="M182 184 C 182 170, 184 158, 180 146" stroke="#5E9C47" stroke-width="2.2" fill="none" />
+      <use href="#pcSun" x="166" y="128" width="28" height="28" />
+      <path d="M150 184 C 150 174, 152 166, 150 158" stroke="#5E9C47" stroke-width="2" fill="none" />
+      <use href="#pcBud" x="141" y="148" width="18" height="18" />
+    </>}
+
+    <!-- the branch: carved, tapering, growing in from the box's edge -->
+    <g class="nook-branch">
+      <path d="M200 117 C 160 114, 112 112, 62 111 C 56 111, 55 116, 60 116.5 C 110 118, 160 124, 200 131 Z" fill="#7A5C47" />
+      <path d="M200 118 C 160 115.5, 112 113.5, 64 112.6" stroke="#A3836A" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".8" />
+      <path d="M186 124 q -14 -1 -26 -2 M150 121 q -10 0 -20 -1.5 M118 117.5 q -8 0 -14 -0.6" stroke="#5B4232" stroke-width="1" fill="none" opacity=".7" />
+      <ellipse cx="136" cy="119" rx="3.2" ry="2.2" fill="#5B4232" opacity=".75" />
+      <!-- a fork rising off it -->
+      <path d={kind === 'twig' ? 'M88 113 C 84 100, 86 86, 94 72 M90 96 C 98 90, 106 88, 114 88' : 'M84 113 C 80 104, 80 96, 84 88'} stroke="#7A5C47" stroke-width={kind === 'twig' ? 3 : 2.4} fill="none" stroke-linecap="round" />
+      {kind === 'twig'
+        ? <>
+            <use href="#pcLeaf" x="0" y="-20" width="60" height="40" transform="translate(94 72) rotate(-70) scale(.42)" style="color:#5E9C47" />
+            <use href="#pcLeaf" x="0" y="-20" width="60" height="40" transform="translate(114 88) rotate(-20) scale(.36)" style="color:#7FAE66" />
+            <use href="#pcLeaf" x="0" y="-20" width="60" height="40" transform="translate(88 86) rotate(-150) scale(.3)" style="color:#6DA850" />
+          </>
+        : <use href="#pcLeaf" x="0" y="-20" width="60" height="40" transform="translate(84 88) rotate(-80) scale(.3)" style="color:#6DA850" />}
+      <use href="#pcLeaf" x="0" y="-20" width="60" height="40" transform="translate(62 113) rotate(170) scale(.3)" style="color:#7FAE66" />
+    </g>
+
+    <!-- mossy bank along the bottom of the bay -->
+    {moss.map((m) => <circle cx={m.x.toFixed(1)} cy={m.y.toFixed(1)} r={m.r.toFixed(1)} fill={m.c} />)}
+    {moss.slice(0, 8).map((m) => <circle cx={(m.x - m.r * .3).toFixed(1)} cy={(m.y - m.r * .4).toFixed(1)} r={(m.r * .35).toFixed(1)} fill="#A9C27A" opacity=".45" />)}
+    {specks.map((p, i) => <circle cx={p.x.toFixed(1)} cy={p.y.toFixed(1)} r="1.6" fill={i % 2 ? '#FFE9A6' : '#F7F1E1'} />)}
+  </svg>
+  <span class="perch-spot" data-parrot-perch data-face={side === 'right' ? '-1' : '1'} style={`left:${left.toFixed(1)}%;top:${((STAND.y / 190) * 100).toFixed(1)}%`}></span>
+</div>
