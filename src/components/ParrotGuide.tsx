@@ -4,7 +4,7 @@ import '../styles/parrot.css';
 import ParrotArt, { type ParrotPalette } from './ParrotArt';
 
 /*
-  The parrot guide (scarlet macaw colours; see ParrotArt.tsx for the others).
+  The parrot guide: Poly, an African grey (see ParrotArt.tsx).
   - On the home page it perches on the branch in the hero ([data-parrot-home]) and asks what you'd like to know.
   - Pick a topic: it says a line, flies to that block ([data-parrot-stop="<id>"]), perches on it and lights it up.
   - When its block scrolls away it flies to the corner; tap it any time to ask again.
@@ -31,7 +31,7 @@ const TOPICS: Topic[] = [
 
 
 /** Parrot colours: 'green' (Cape parrot), 'red' (red with green wings) or 'scarlet' (macaw). */
-const PARROT_PALETTE: ParrotPalette = 'scarlet';
+const PARROT_PALETTE: ParrotPalette = 'grey';
 
 const W = 92;            // parrot size (px), the same everywhere
 const H = Math.round(W * 1.12);
@@ -239,9 +239,8 @@ export default function ParrotGuide() {
             perch.current = { el: l.el, fx: l.fx }; mode.current = 'perched'; setFlying(false);
             timer.current = now + 9000 + Math.random() * 4000;
             facing.current = isSpot(l.el) ? Number((l.el as HTMLElement).dataset.face ?? -1) : l.fx > 0.5 ? -1 : 1;
-            if (l.el.closest('[data-lion]')) dispatchEvent(new CustomEvent('parrot-on-lion', { detail: { el: l.el } }));   // she yawns at him
-            else { const glow = isSpot(l.el) ? l.el.closest(PERCHABLE) ?? l.el.parentElement! : l.el;
-              glow.classList.add('parrot-glow'); setTimeout(() => glow.classList.remove('parrot-glow'), 2600); }
+            const glow = isSpot(l.el) ? l.el.closest(PERCHABLE) ?? l.el.parentElement! : l.el;
+            glow.classList.add('parrot-glow'); setTimeout(() => glow.classList.remove('parrot-glow'), 2600);
             l.then?.();
           }
         }
@@ -319,7 +318,7 @@ export default function ParrotGuide() {
     say('fact', nextFact(ctx), undefined, 8000);
     if (mode.current === 'perched') timer.current = performance.now() + 9000;
   }
-  function hide() { setHidden(true); setBubble(null); try { sessionStorage.setItem('pg-hidden', '1'); } catch { /* ignore */ } dispatchEvent(new Event('mascots-hide')); }
+  function hide() { setHidden(true); setBubble(null); try { sessionStorage.setItem('pg-hidden', '1'); } catch { /* ignore */ }  }
 
   const topicButtons = (big = false) => (
     <div className={`pg-topics ${big ? 'is-big' : ''}`}>
@@ -374,7 +373,7 @@ export default function ParrotGuide() {
             <div className="pg-content" key="menu">
               <p className="pg-hello">What would you like to know about?</p>
               {topicButtons()}
-              <div className="pg-foot"><button type="button" className="pg-link" onClick={hide}>Hide the animals</button></div>
+              <div className="pg-foot"><button type="button" className="pg-link" onClick={hide}>Hide Poly</button></div>
             </div>
           )}
           <button type="button" className="pg-x" aria-label="Close" onClick={() => setBubble(null)}>×</button>

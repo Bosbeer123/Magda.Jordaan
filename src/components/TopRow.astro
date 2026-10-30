@@ -1,5 +1,4 @@
 ---
-import LionArt from './LionArt';
 // The site's name and links, built into the top of the hero / page block (no separate header bar).
 interface Props { current?: string; light?: boolean }
 const { current = '', light = false } = Astro.props;
@@ -13,7 +12,7 @@ const links = [
 ---
 <div class={`toprow ${light ? 'is-light' : ''}`}>
   <a class="tr-brand" href="/">
-    <span class="tr-mark" aria-hidden="true"><LionArt pose="head" width={44} /></span>
+    <img class="tr-mark" src="/photos/lioness-face.webp" alt="" width="46" height="46" />
     Magda Jordaan
   </a>
   <nav class="tr-links" aria-label="Main">
@@ -23,8 +22,7 @@ const links = [
 <style>
   .toprow { display: flex; align-items: center; gap: 12px 28px; flex-wrap: wrap; position: relative; z-index: 3; }
   .tr-brand { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-size: 22px; color: var(--ink); text-decoration: none; margin-right: auto; }
-  .tr-mark { display: grid; place-items: center; width: 46px; height: 46px; overflow: hidden; border-radius: 50%; background: #12302A; box-shadow: inset 0 0 0 2px #D3A54E; flex: none; }
-  .tr-mark :global(svg) { width: 44px; height: auto; transform: translate(3px, 4px); }
+  .tr-mark { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; flex: none; box-shadow: 0 0 0 2px #D3A54E; background: #12302A; }
   .toprow.is-light .tr-brand { color: #F7F1E3; }
   .toprow.is-light .tr-links a { color: #E6DFCD; }
   .toprow.is-light .tr-links a::after { background: #D3A54E; }

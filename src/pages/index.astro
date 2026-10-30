@@ -6,27 +6,15 @@ import SunflowerTest from '../components/SunflowerTest';
 import { getCollection } from 'astro:content';
 import { site, linkedin } from '../config/site';
 import Fact from '../components/Fact.astro';
-import LionArt from '../components/LionArt';
-import '../styles/lion.css';
 // Garden design. Scenes fit the screen: 1 hero (intro + parrot + sunflower) · 2 the roots (pinned, grows as you scroll)
 // · 3 the sunflower activity · then the calm blocks. Red = Momentum. Voice: short, "I", plain, never "independent".
 
 const waNumber = site.whatsapp.startsWith('[') ? '' : site.whatsapp;
 
-// Hero scene ("Pride"): deep green and gold, Magda's photo in a gold ring, the lioness lying at her side and a row of
-// gold-line sunflowers along the bottom. Fixed seed: same every time.
+// Hero scene: Magda's own photograph of a lioness, on the deep green and gold. The photos are hers (public/photos).
 let seed = 5;
 const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 const R = (n: number) => Math.round(n * 10) / 10;
-const canopy: [number, number, number][] = [[196, 168, 96], [124, 196, 66], [262, 214, 66], [170, 96, 68], [248, 120, 58], [108, 134, 50]];
-const canopyLeaves = canopy.flatMap(([cx, cy, r]) => Array.from({ length: 6 }, (_, i) => {
-  const a = (i / 6) * Math.PI * 2 + rnd() * 0.8;
-  return { x: R(cx + Math.cos(a) * r * 0.92), y: R(cy + Math.sin(a) * r * 0.92), rot: Math.round(a * 180 / Math.PI + (rnd() - .5) * 40), k: R(0.32 + rnd() * 0.22), c: ['#3F8560', '#4A9468', '#2F7352', '#57A273'][Math.floor(rnd() * 4)] };
-})).filter((l) => l.y < 300);
-const goldField = Array.from({ length: 22 }, (_, i) => {
-  const x = R((i + 0.5) * (1440 / 22) + (rnd() - .5) * 18), s = R(34 + rnd() * 18), y = R(52 + (rnd() - .5) * 18);
-  return { x, y, s, lean: R((rnd() - .5) * 10), rot: Math.round(rnd() * 30) };
-});
 
 // Underground life for the roots scene: a mossy, grassy top edge, moss clumps with little sprouts down the sides and
 // between the roots, pebbles, and a couple of tiny mushrooms. Kept away from the text column. Same seed every time.
@@ -86,8 +74,13 @@ const layers = [
   title="Home"
   description="Magda Jordaan, Financial Adviser with Momentum Consult and admitted attorney in Centurion. Health, prosperity and longevity for your family, planned in plain language."
 >
-  <!-- ① Hero scene ("Pride"): her words, her photo, the lioness and the parrot. One screen, still. -->
+  <!-- ① Hero scene: her words beside her own photograph of a lioness. One screen, still. -->
   <section class="scene hero-scene snap" data-facts="home">
+    <figure class="hero-photo">
+      <img src="/photos/lioness.webp" alt="A lioness standing in the grass, looking out" width="1600" height="1066" fetchpriority="high" />
+      <figcaption>Photograph by Magda Jordaan</figcaption>
+      <span class="hero-perch-mob" data-parrot-home aria-hidden="true"></span>
+    </figure>
     <div class="wrap hero-wrap">
       <TopRow current="/" light />
       <div class="hero-grid">
@@ -98,75 +91,22 @@ const layers = [
             I&rsquo;ve wound up the estates poor planning leaves behind. Now I help families get their investments and
             estates right, through <span class="momentum-pill">Momentum Consult</span> and as an attorney.
           </p>
+          <div class="hero-me">
+            <span class="hero-me-ph">
+              <img src="/magda.webp" alt="Magda Jordaan" width="800" height="800" />
+            </span>
+            <span><b>Magda Jordaan</b><br />Financial adviser and admitted attorney</span>
+          </div>
           <div class="ask-wrap" style="position:relative">
+          <span class="hero-perch" data-parrot-home aria-hidden="true"></span>
           <div class="ask-menu" data-parrot-menu>
             <noscript><p><a class="btn btn-primary" href="/check">Plant your family&rsquo;s sunflower</a></p></noscript>
           </div>
           </div>
         </div>
-        <div class="hero-stage">
-          <div class="pride">
-            <span class="pride-glow" aria-hidden="true"></span>
-            <span class="pride-ring" aria-hidden="true"></span>
-            <div class="portrait pride-portrait">
-              <img src="/magda.webp" alt="Magda Jordaan" width="800" height="800" fetchpriority="high" />
-            </div>
-            <!-- a little tree on the right: the parrot's branch, and shade for the lioness -->
-            <svg class="pride-tree" viewBox="0 0 300 520" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
-              <defs>
-                <linearGradient id="trunkG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6B4D36" /><stop offset=".55" stop-color="#7E5C42" /><stop offset="1" stop-color="#4E3726" /></linearGradient>
-                <radialGradient id="leafG" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#3F8560" /><stop offset="1" stop-color="#1F5440" /></radialGradient>
-                <symbol id="trLeaf" viewBox="0 -20 60 40" overflow="visible"><path d="M0 0 C 8 -14, 30 -22, 50 -14 C 58 -10, 60 -4, 58 0 C 56 4, 50 12, 36 14 C 20 16, 6 8, 0 0 Z" fill="currentColor" /></symbol>
-              </defs>
-              <!-- canopy, behind -->
-              <g class="sway" style="animation-duration:12s">
-                <circle cx="196" cy="168" r="96" fill="url(#leafG)" />
-                <circle cx="124" cy="196" r="66" fill="#2A6A4C" />
-                <circle cx="262" cy="214" r="66" fill="#245C44" />
-                <circle cx="170" cy="96" r="68" fill="#34795A" />
-                <circle cx="248" cy="120" r="58" fill="#2D6E50" />
-                <circle cx="108" cy="134" r="50" fill="#3A7F5D" />
-                {canopyLeaves.map((l) => <use href="#trLeaf" x="0" y="-20" width="60" height="40" transform={`translate(${l.x} ${l.y}) rotate(${l.rot}) scale(${l.k})`} style={`color:${l.c}`} />)}
-                <g fill="#D3A54E" opacity=".55"><circle cx="150" cy="80" r="3" /><circle cx="214" cy="104" r="2.5" /><circle cx="120" cy="170" r="2.5" /><circle cx="250" cy="180" r="3" /><circle cx="186" cy="200" r="2" /><circle cx="96" cy="128" r="2" /></g>
-              </g>
-              <!-- trunk and roots -->
-              <path d="M184 520 C 192 462, 194 402, 190 342 C 187 300, 184 272, 172 242 L 196 236 C 204 270, 210 302, 214 344 C 218 404, 222 462, 236 520 Z" fill="url(#trunkG)" />
-              <path d="M200 300 C 203 340, 205 390, 204 440" stroke="#A3836A" stroke-width="2" fill="none" opacity=".45" />
-              <path d="M184 520 C 176 512, 164 510, 152 514 M236 520 C 244 510, 258 508, 270 514" stroke="#5B4232" stroke-width="7" fill="none" stroke-linecap="round" />
-              <path d="M200 252 C 218 226, 238 204, 262 186" stroke="#6B4D36" stroke-width="9" fill="none" stroke-linecap="round" />
-              <!-- the parrot's branch -->
-              <path d="M192 304 C 160 292, 118 286, 66 284 C 59 284, 58 291, 65 291.5 C 118 294, 160 304, 194 322 Z" fill="#6B4D36" />
-              <path d="M190 305 C 158 294, 118 288.5, 68 286" stroke="#A3836A" stroke-width="1.6" fill="none" opacity=".7" />
-              <path d="M96 287 C 92 276, 94 266, 102 258" stroke="#6B4D36" stroke-width="3" fill="none" stroke-linecap="round" />
-              <use href="#trLeaf" x="0" y="-20" width="60" height="40" transform="translate(102 258) rotate(-70) scale(.5)" style="color:#3F8560" />
-              <use href="#trLeaf" x="0" y="-20" width="60" height="40" transform="translate(66 288) rotate(165) scale(.42)" style="color:#4A9468" />
-              <use href="#trLeaf" x="0" y="-20" width="60" height="40" transform="translate(150 296) rotate(110) scale(.36)" style="color:#2F7352" />
-              <rect data-parrot-home x="112" y="286" width="30" height="2" fill="transparent" />
-            </svg>
-            <button class="pride-lion" type="button" data-lion data-lion-home aria-label="The lioness: tap for something useful">
-              <LionArt pose="lie" width={340} />
-              <span class="perch-spot" data-parrot-perch data-face="-1" style="left:46%;top:58%"></span>
-            </button>
-          </div>
-        </div>
       </div>
     </div>
-    <svg class="gold-field" viewBox="0 0 1440 110" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
-      <defs>
-        <symbol id="sfGold" viewBox="-50 -50 100 100" overflow="visible">
-          <g fill="none" stroke="#D3A54E" stroke-width="2.6">{Array.from({ length: 15 }, (_, i) => <ellipse cx="0" cy="-30" rx="7" ry="15" transform={`rotate(${i * 24})`} />)}<circle r="15" /></g>
-          <circle r="7" fill="#D3A54E" opacity=".5" />
-        </symbol>
-      </defs>
-      {goldField.map((f) => (
-        <g>
-          <path d={`M${f.x + f.lean} 112 C ${f.x + f.lean} ${f.y + 40}, ${f.x} ${f.y + 30}, ${f.x} ${f.y + f.s * .35}`} stroke="#D3A54E" stroke-opacity=".55" stroke-width="2" fill="none" />
-          <use href="#sfGold" x={f.x - f.s / 2} y={f.y - f.s / 2} width={f.s} height={f.s} transform={`rotate(${f.rot} ${f.x} ${f.y})`} />
-        </g>
-      ))}
-    </svg>
     <svg class="horizon" viewBox="0 0 1440 120" preserveAspectRatio="none" aria-hidden="true">
-      <path d="M0 52 C 240 30, 480 58, 720 46 S 1200 30, 1440 50 V 120 H 0 Z" fill="#1E4438" />
       <path d="M0 74 C 300 62, 620 84, 960 70 S 1300 66, 1440 76 V 120 H 0 Z" fill="#5A4433" />
     </svg>
     <a class="dig" href="#roots">Scroll into the roots <span aria-hidden="true">↓</span></a>
@@ -286,6 +226,24 @@ const layers = [
     </div>
   </section>
 
+  <!-- ⑤ Through my lens: Magda's own photographs from the bush -->
+  <section class="lens" data-facts="home">
+    <div class="wrap">
+      <div class="lens-head reveal">
+        <p class="eyebrow">Through my lens</p>
+        <h2 class="h2">The bush taught me patience. So did estates.</h2>
+        <p class="muted">When I&rsquo;m not with clients, I&rsquo;m out with my camera. Every photo on this site is mine.</p>
+      </div>
+      <div class="lens-grid">
+        <figure class="lens-big reveal"><img src="/photos/hornbill.webp" alt="A southern yellow-billed hornbill on a dead branch against a blue sky" loading="lazy" width="1600" height="1066" /><figcaption>Southern yellow-billed hornbill</figcaption></figure>
+        <figure class="reveal" style="--d:.08s"><img src="/photos/hornbill-portrait.webp" alt="Close-up of a yellow-billed hornbill's head and beak" loading="lazy" width="1600" height="1066" /><figcaption>Up close</figcaption></figure>
+        <figure class="reveal" style="--d:.16s"><img src="/photos/lioness-road.webp" alt="A lioness crossing a tar road in front of a stopped car" loading="lazy" width="1600" height="1066" /><figcaption>She has right of way</figcaption></figure>
+        <figure class="reveal" style="--d:.24s"><img src="/photos/lioness-resting.webp" alt="A lioness lying in green grass under trees" loading="lazy" width="1600" height="1066" style="object-position:40% 50%" /><figcaption>Resting, never off guard</figcaption></figure>
+        <figure class="reveal" style="--d:.32s"><img src="/photos/hippos.webp" alt="A pod of hippos in a river" loading="lazy" width="1600" height="1066" /><figcaption>Hippos at rest</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
   <section style="padding-top:0">
     <div class="wrap stack" style="gap:24px">
       <div class="reveal" style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
@@ -333,18 +291,6 @@ const layers = [
 </Base>
 
 <script>
-  // The hero lioness yawns now and then; tapping her asks the lion guide to say something.
-  const heroLion = document.querySelector<HTMLElement>('[data-lion-home]');
-  if (heroLion && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    const yawn = () => { const svg = heroLion.querySelector('.ln'); svg?.classList.add('is-yawning'); setTimeout(() => svg?.classList.remove('is-yawning'), 2400); setTimeout(yawn, 14000 + Math.random() * 12000); };
-    setTimeout(yawn, 6000);
-  }
-  addEventListener('parrot-on-lion', (e) => {
-    const el = (e as CustomEvent).detail?.el as Element | undefined;
-    if (heroLion && el && heroLion.contains(el)) { const svg = heroLion.querySelector('.ln'); svg?.classList.add('is-yawning'); setTimeout(() => svg?.classList.remove('is-yawning'), 2200); }
-  });
-  heroLion?.addEventListener('click', () => dispatchEvent(new CustomEvent('lion-say', { detail: { el: heroLion } })));
-
   // The roots grow with scroll: progress through the pinned section draws each layer's roots and shows its cards.
   const sec = document.querySelector<HTMLElement>('.roots');
   const stage = sec?.querySelector<HTMLElement>('.roots-stage');
@@ -377,52 +323,61 @@ const layers = [
 </script>
 
 <style>
-  /* ① Hero scene ("Pride") */
+  /* ① Hero scene: text on deep green, her lioness photograph on the right */
   .scene { padding: 0; }
-  .hero-scene { position: relative; height: 100svh; min-height: 620px; overflow: hidden; display: flex; flex-direction: column; color: #F4EEDF;
-    background: radial-gradient(55% 60% at 74% 40%, #1F4A3E 0%, rgba(31,74,62,0) 70%), linear-gradient(180deg, #12302A 0%, #143428 100%); }
+  .hero-scene { position: relative; height: 100svh; min-height: 640px; overflow: hidden; display: flex; flex-direction: column; color: #F4EEDF;
+    background: linear-gradient(180deg, #12302A 0%, #143428 100%); }
+  .hero-photo { position: absolute; top: 0; right: 0; bottom: 0; width: 56%; margin: 0; z-index: 0; }
+  .hero-photo img { width: 100%; height: 100%; object-fit: cover; object-position: 72% 45%; display: block; }
+  .hero-photo::before { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: linear-gradient(90deg, #12302A 0%, rgba(18,48,42,.55) 18%, rgba(18,48,42,0) 42%), linear-gradient(0deg, rgba(18,48,42,.55) 0%, rgba(18,48,42,0) 26%); }
+  .hero-photo figcaption { position: absolute; right: 18px; bottom: 54px; z-index: 2; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: rgba(244,238,223,.75); }
   .hero-wrap { position: relative; z-index: 2; flex: 1; display: flex; flex-direction: column; padding-top: 22px; min-height: 0; width: 100%; }
-  .hero-grid { flex: 1; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 24px; align-items: center; min-height: 0; padding-bottom: 96px; }
+  .hero-grid { flex: 1; display: grid; grid-template-columns: minmax(0, 46%) 1fr; align-items: center; min-height: 0; padding-bottom: 80px; }
   .hero-text { display: flex; flex-direction: column; gap: 16px; position: relative; z-index: 3; }
   .hero-eb { color: #D3A54E; }
   .hero-title { font-size: clamp(36px, 4vw, 58px); line-height: 1.04; letter-spacing: -.02em; color: #F7F1E3; }
-  .hero-text .lead { font-size: 18px; max-width: 560px; color: #CFDCD4; }
+  .hero-text .lead { font-size: 18px; max-width: 540px; color: #CFDCD4; }
   .momentum-pill { display: inline-block; padding: 0 8px; border-radius: 6px; background: var(--momentum); color: #fff; font-weight: 600; }
-  .ask-menu { margin-top: 6px; max-width: 540px; position: relative; }
+  .hero-me { display: flex; align-items: center; gap: 14px; font-size: 15px; color: #CFDCD4; line-height: 1.35; }
+  .hero-me b { color: #F7F1E3; font-weight: 600; }
+  .hero-me-ph { position: relative; flex: none; width: 64px; height: 64px; border-radius: 50%; padding: 3px; background: linear-gradient(135deg, #EBCB80, #A87A2A); }
+  .hero-me-ph img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+  .hero-perch { position: absolute; right: 54px; top: 4px; width: 30px; height: 2px; z-index: 1; }
+  .hero-perch-mob { display: none; position: absolute; right: 64px; bottom: 40px; width: 30px; height: 2px; }
+  .ask-menu { margin-top: 4px; max-width: 540px; position: relative; }
   .hero-scene :global(.pg-inline) { background: #FBF8F1; color: var(--ink); }
-  .perch-mobile { display: none; position: absolute; right: 28px; top: 0; width: 40px; height: 2px; }
-  .hero-stage { position: relative; height: 100%; min-height: 0; align-self: stretch; }
-  .pride { position: absolute; inset: 0; }
-  .pride-glow { position: absolute; left: 30%; top: 44%; width: 110%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%;
-    background: radial-gradient(circle, rgba(211,165,78,.16) 0%, rgba(211,165,78,0) 60%); pointer-events: none; }
-  .portrait.pride-portrait { position: absolute; left: 30%; top: 40%; transform: translate(-50%, -50%); width: min(300px, 50%); margin: 0; padding: 9px; z-index: 1;
-    background: linear-gradient(135deg, #EBCB80, #A87A2A); box-shadow: 0 30px 60px rgba(0,0,0,.35); }
-  .pride-ring { position: absolute; left: 30%; top: 40%; transform: translate(-50%, -50%); width: min(340px, 57%); aspect-ratio: 1; border-radius: 50%; border: 1.5px solid rgba(211,165,78,.45); z-index: 1; }
-  .pride-tree { position: absolute; right: -4%; bottom: 52px; height: 90%; width: auto; aspect-ratio: 300 / 520; z-index: 0; overflow: visible; }
-  .pride-lion { position: absolute; right: 2%; bottom: 46px; width: min(320px, 54%); padding: 0; border: 0; background: none; cursor: pointer; z-index: 2;
-    filter: drop-shadow(0 14px 18px rgba(0,0,0,.28)); }
-  .pride-lion :global(.ln) { width: 100%; height: auto; transform: scaleX(-1); }
-  .pride-lion .perch-spot { position: absolute; width: 40px; height: 2px; transform: translateX(-50%); }
-  .pride-lion:focus-visible { outline: 2.5px solid #D3A54E; outline-offset: 6px; border-radius: 16px; }
-  .portrait { position: relative; width: min(400px, 78%); aspect-ratio: 1; border-radius: 50%; background: #fff; padding: 10px; }
-  .portrait img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
-  .gold-field { position: absolute; left: 0; right: 0; bottom: 30px; width: 100%; height: 110px; z-index: 2; pointer-events: none; }
-  .horizon { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 110px; z-index: 3; pointer-events: none; }
+  .perch-mobile { display: none; }
+  .horizon { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 60px; z-index: 3; pointer-events: none; }
   .dig { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 4; color: #EADFCB; font-weight: 600; font-size: 14px; text-decoration: none; letter-spacing: .04em; }
   .dig span { display: inline-block; animation: dig 2s ease-in-out infinite; }
   @keyframes dig { 50% { transform: translateY(4px); } }
   @media (max-width: 900px) {
-    .hero-scene { height: auto; min-height: 100svh; max-height: none; }
-    .hero-grid { grid-template-columns: 1fr; padding-bottom: 120px; gap: 0; }
-    .hero-stage { position: relative; order: -1; height: 230px; }
-    .hero-stage { height: 260px; }
-    .portrait.pride-portrait { width: 160px; padding: 6px; left: 34%; top: 46%; }
-    .pride-ring { width: 184px; left: 34%; top: 46%; }
-    .pride-tree { right: -4%; bottom: 0; height: 100%; }
-    .pride-lion { width: 160px; right: 0; bottom: 0; }
-    .hero-text { padding-top: 4px; }
+    .hero-scene { height: auto; min-height: 100svh; }
+    .hero-photo { width: 100%; bottom: auto; height: 46svh; min-height: 280px; }
+    .hero-photo img { object-position: 40% 40%; }
+    .hero-photo::before { background: linear-gradient(0deg, #12302A 0%, rgba(18,48,42,0) 45%), linear-gradient(180deg, rgba(18,48,42,.8) 0%, rgba(18,48,42,0) 32%); }
+    .hero-photo figcaption { bottom: 14px; right: 12px; font-size: 11px; }
+    .hero-grid { grid-template-columns: 1fr; padding-top: max(200px, calc(46svh - 96px)); padding-bottom: 80px; }
     .hero-title { font-size: 34px; }
-    .ask-wrap { margin-top: 40px; }
+    .hero-perch { display: none; }
+    .hero-perch-mob { display: block; }
+  }
+
+  /* ⑤ Through my lens */
+  .lens-head { max-width: 640px; margin-bottom: 22px; }
+  .lens-head .h2 { margin: 6px 0 8px; }
+  .lens-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 14px; height: min(560px, 70vw); }
+  .lens-grid figure { position: relative; margin: 0; border-radius: var(--r-lg); overflow: hidden; background: #22392F; }
+  .lens-grid .lens-big { grid-row: span 2; }
+  .lens-grid img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .8s var(--ease); }
+  .lens-grid figure:hover img { transform: scale(1.03); }
+  .lens-grid figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: 26px 14px 10px; font-size: 13px; font-weight: 600; color: #fff;
+    background: linear-gradient(0deg, rgba(0,0,0,.55), rgba(0,0,0,0)); }
+  @media (max-width: 760px) {
+    .lens-grid { grid-template-columns: 1fr 1fr; grid-template-rows: auto; height: auto; }
+    .lens-grid .lens-big { grid-column: span 2; grid-row: auto; aspect-ratio: 3 / 2; }
+    .lens-grid figure:not(.lens-big) { aspect-ratio: 1; }
   }
 
   /* ② Roots */
